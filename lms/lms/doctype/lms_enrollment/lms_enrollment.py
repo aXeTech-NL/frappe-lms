@@ -85,7 +85,24 @@ class LMSEnrollment(Document):
 		if not course_details.published and not is_admin():
 			frappe.throw(_("You cannot enroll in an unpublished course."))
 
-		if course_details.paid_course and not is_admin():
+		if is_admin():
+			return
+
+		from lms.entitlements import decide
+
+		entitlement = decide("course", self.course, "enroll", user=frappe.session.user)
+		if entitlement.handled:
+			# A generic insert can submit any member. A managed provider decision is
+			# always about the authenticated learner, never a client-selected account.
+			if self.member != frappe.session.user:
+				frappe.throw(_("You can only enroll your own account."), frappe.PermissionError)
+			if not entitlement.allowed:
+				frappe.throw(
+					_("You do not currently have access to enroll in this course."), frappe.PermissionError
+				)
+			return
+
+		if course_details.paid_course:
 			payment = frappe.db.exists(
 				"LMS Payment",
 				{

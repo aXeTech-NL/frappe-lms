@@ -9,7 +9,7 @@
 				{{ priceLabel }}
 			</div>
 			<div v-if="!readOnlyMode">
-				<div v-if="course.data?.membership" class="space-y-2 mb-8">
+				<div v-if="canContinue" class="space-y-2 mb-8">
 					<router-link
 						:to="{
 							name: 'Lesson',
@@ -35,6 +35,30 @@
 					</router-link>
 					<CertificationLinks :courseName="course.data.name" class="w-full" />
 				</div>
+				<EntitlementActions
+					v-else-if="managed && !entitled && !isAdmin"
+					:decision="activeEntitlement"
+					class="mb-8"
+				/>
+				<Badge
+					v-else-if="managed && course.data?.disable_self_learning && !isAdmin"
+					theme="blue"
+					size="lg"
+					class="mb-4"
+				>
+					{{ __('Contact the Administrator to enroll for this course') }}
+				</Badge>
+				<Button
+					v-else-if="managed && entitled && !course.data?.membership && !isAdmin"
+					data-testid="managed-course-enroll"
+					@click="enrollStudent()"
+					variant="solid"
+					class="w-full mb-8"
+					size="md"
+				>
+					<template #prefix><span class="lucide-book-text size-4" /></template>
+					{{ __('Enroll Now') }}
+				</Button>
 				<router-link
 					v-else-if="course.data?.paid_course && !isAdmin"
 					:to="{
@@ -50,12 +74,8 @@
 						size="md"
 						class="w-full mb-8 text-p-base-medium"
 					>
-						<template #prefix>
-							<span class="lucide-credit-card size-4" />
-						</template>
-						<span>
-							{{ __('Buy this course') }}
-						</span>
+						<template #prefix><span class="lucide-credit-card size-4" /></template>
+						{{ __('Buy this course') }}
 					</Button>
 				</router-link>
 				<Badge
@@ -73,12 +93,8 @@
 					class="w-full mb-8"
 					size="md"
 				>
-					<template #prefix>
-						<span class="lucide-book-text size-4" />
-					</template>
-					<span>
-						{{ __('Enroll Now') }}
-					</span>
+					<template #prefix><span class="lucide-book-text size-4" /></template>
+					{{ __('Enroll Now') }}
 				</Button>
 				<Button
 					v-if="canGetCertificate"
@@ -152,6 +168,7 @@ import { Badge, Button, call, createResource, toast } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import CertificationLinks from '@/components/CertificationLinks.vue'
 import VideoPreview from '@/components/VideoPreview.vue'
+import EntitlementActions from '@/components/EntitlementActions.vue'
 import { useTelemetry } from 'frappe-ui/frappe'
 import { openExternal } from '@/utils/openExternal'
 import type {
@@ -222,7 +239,34 @@ const is_instructor = (): boolean => {
 	return user_is_instructor
 }
 
+const viewEntitlement = computed(
+	() => props.course.data?.entitlements?.view || props.course.data?.entitlement
+)
+const enrollEntitlement = computed(
+	() => props.course.data?.entitlements?.enroll || viewEntitlement.value
+)
+const consumeEntitlement = computed(
+	() => props.course.data?.entitlements?.consume || viewEntitlement.value
+)
+const activeEntitlement = computed(() =>
+	props.course.data?.membership ? consumeEntitlement.value : enrollEntitlement.value
+)
+const managed = computed(() => Boolean(activeEntitlement.value?.handled))
+const entitled = computed(
+	() => !managed.value || Boolean(activeEntitlement.value?.allowed)
+)
+const canContinue = computed(() =>
+	Boolean(
+		props.course.data?.membership &&
+			(isAdmin.value || !consumeEntitlement.value?.handled || consumeEntitlement.value.allowed)
+	)
+)
+
 const priceLabel = computed<string>(() => {
+	const displayEntitlement = activeEntitlement.value || viewEntitlement.value
+	if (managed.value && displayEntitlement?.badge?.label)
+		return displayEntitlement.badge.label
+	if (managed.value && !entitled.value) return __('Locked')
 	if (props.course.data?.paid_course) return props.course.data?.price || ''
 	return __('Free')
 })
@@ -247,7 +291,8 @@ const hasCourseStats = computed<boolean>(() =>
 
 const canGetCertificate = computed<boolean>(() => {
 	return Boolean(
-		props.course.data?.enable_certification &&
+		canContinue.value &&
+			props.course.data?.enable_certification &&
 			(props.course.data?.membership?.progress ?? 0) >= 100
 	)
 })

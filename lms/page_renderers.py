@@ -5,6 +5,7 @@ Handles rendering of profile pages.
 
 import mimetypes
 import os
+import shutil
 from urllib.parse import unquote
 
 import frappe
@@ -13,18 +14,60 @@ from werkzeug.wrappers import Response
 from werkzeug.wsgi import wrap_file
 
 
+def protect_legacy_scorm_packages() -> int:
+	"""Move legacy public SCORM bytes behind the permission-aware renderer.
+
+	The standard production nginx config serves ``public/scorm`` before Python,
+	so no runtime hook can protect those bytes. Preserve unmanaged sites exactly:
+	the relocation runs only when an external entitlement provider is installed.
+	Provider apps should call this after installation; LMS also calls it after
+	migrate for already-installed providers. Stored ``/scorm/...`` URLs do not
+	change because the renderer resolves private storage first.
+	"""
+	from lms.entitlements import has_provider
+
+	if not has_provider():
+		return 0
+
+	public_root = frappe.get_site_path("public", "scorm")
+	private_root = frappe.get_site_path("private", "scorm")
+	if not os.path.isdir(public_root):
+		return 0
+
+	os.makedirs(private_root, exist_ok=True)
+	moved = 0
+	for root, directories, files in os.walk(public_root, topdown=False, followlinks=False):
+		relative = os.path.relpath(root, public_root)
+		destination_root = private_root if relative == "." else os.path.join(private_root, relative)
+		os.makedirs(destination_root, exist_ok=True)
+		for filename in files:
+			source = os.path.join(root, filename)
+			destination = os.path.join(destination_root, filename)
+			if os.path.islink(source):
+				os.unlink(source)
+			elif os.path.exists(destination):
+				os.unlink(source)
+			else:
+				shutil.move(source, destination)
+			moved += 1
+		for directory in directories:
+			path = os.path.join(root, directory)
+			if os.path.islink(path):
+				os.unlink(path)
+			elif os.path.isdir(path) and not os.listdir(path):
+				os.rmdir(path)
+	if os.path.isdir(public_root) and not os.listdir(public_root):
+		os.rmdir(public_root)
+	return moved
+
+
 class SCORMRenderer(BaseRenderer):
 	def can_render(self):
 		return "scorm/" in self.path
 
-	# Disk roots tried, in order, to resolve SCORM bytes. New packages are extracted
-	# under private/scorm (gated: /private is always routed through Frappe, so this
-	# permission gate runs in production too). Legacy packages already extracted under
-	# public/scorm are still served as a fallback, but the standard bench nginx config
-	# serves public/ directly (try_files .../public/$uri @webserver), so for those legacy
-	# files this Python gate is BYPASSED in production, exactly as before. Such packages
-	# stay ungated in prod until re-uploaded (re-extraction lands them in private). New
-	# uploads are gated in dev and prod alike.
+	# Disk roots tried in order. New packages use private/scorm. Public is retained
+	# only as an unmanaged legacy fallback; protect_legacy_scorm_packages relocates
+	# it before an entitlement provider can manage access.
 	_DISK_ROOTS = ("private", "public")
 
 	def _check_permission(self):

@@ -5,7 +5,7 @@
 		style="min-height: 350px"
 	>
 		<div
-			class="w-[100%] h-[168px] bg-cover bg-center bg-no-repeat border-t border-x rounded-t-md"
+			class="relative w-[100%] h-[168px] bg-cover bg-center bg-no-repeat border-t border-x rounded-t-md"
 			:style="
 				course.image
 					? { backgroundImage: `url('${encodeURI(course.image)}')` }
@@ -15,6 +15,9 @@
 					  }
 			"
 		>
+			<div v-if="course.entitlement?.handled" class="absolute top-3 end-3 z-10">
+				<EntitlementBadge :decision="course.entitlement" />
+			</div>
 			<!-- <div class="flex items-center flex-wrap relative top-4 px-2 w-fit">
 				<div
 					v-if="course.featured"
@@ -144,6 +147,7 @@ import { computed, watch } from 'vue'
 import CourseInstructors from '@/components/CourseInstructors.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import EntitlementBadge from '@/components/EntitlementBadge.vue'
 
 const { user } = sessionStore()
 

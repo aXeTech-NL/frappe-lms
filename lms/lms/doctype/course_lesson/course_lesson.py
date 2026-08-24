@@ -18,7 +18,13 @@ from lms.lms.doctype.lms_enrollment.lms_enrollment import (
 	batched_enrollment_updates,
 	update_enrollment,
 )
-from lms.lms.permissions import INSTRUCTOR_FIELDS, can_access_lesson, get_locked_lessons
+from lms.lms.permissions import (
+	INSTRUCTOR_FIELDS,
+	can_access_lesson,
+	get_course_entitlement,
+	get_locked_lessons,
+	resolve_lesson_access,
+)
 from lms.lms.utils import (
 	get_course_progress,
 	get_editorjs_blocks,
@@ -144,21 +150,75 @@ def get_permission_query_conditions(user=None):
 			select parent from `tabCourse Instructor`
 			where instructor = {escaped} and parenttype = 'LMS Course'
 		)""",
-		f"""`tabCourse Lesson`.course in (
-			select course from `tabLMS Enrollment` where member = {escaped}
-		)""",
 	]
 
-	if user != "Guest" or guest_access_allowed():
+	from lms.entitlements import decide_many_batched, has_provider, make_request
+
+	if not has_provider():
 		conditions.append(
-			"""(`tabCourse Lesson`.include_in_preview = 1
-			and `tabCourse Lesson`.course in (
-				select name from `tabLMS Course` where published = 1
-			))"""
+			f"""`tabCourse Lesson`.course in (
+				select course from `tabLMS Enrollment` where member = {escaped}
+			)"""
 		)
+		if user != "Guest" or guest_access_allowed():
+			conditions.append(
+				"""(`tabCourse Lesson`.include_in_preview = 1
+				and `tabCourse Lesson`.course in (
+					select name from `tabLMS Course` where published = 1
+				))"""
+			)
+	else:
+		# SQL cannot call an external policy provider. Resolve the bounded sets first
+		# and express only the resulting course names in the list permission query;
+		# per-document reads still go through has_permission/can_access_lesson.
+		enrolled_courses = frappe.get_all("LMS Enrollment", {"member": user}, pluck="course")
+		_enrolled_requests = [make_request("course", course, "consume") for course in enrolled_courses]
+		_enrolled_decisions = decide_many_batched(_enrolled_requests, user=user) if _enrolled_requests else {}
+		allowed_enrolled = [
+			course
+			for course, request in zip(enrolled_courses, _enrolled_requests, strict=True)
+			if not _enrolled_decisions[request["key"]].handled or _enrolled_decisions[request["key"]].allowed
+		]
+		if allowed_enrolled:
+			conditions.append(f"`tabCourse Lesson`.course in ({_escaped_sql_list(allowed_enrolled)})")
+
+		if user != "Guest" or guest_access_allowed():
+			preview_courses = frappe.get_all(
+				"Course Lesson",
+				filters={"include_in_preview": 1},
+				pluck="course",
+				distinct=True,
+			)
+			preview_courses = [
+				course
+				for course in preview_courses
+				if course and frappe.db.get_value("LMS Course", course, "published")
+			]
+			_preview_requests = [
+				make_request("course", course, "consume", context={"is_preview": True})
+				for course in preview_courses
+			]
+			_preview_decisions = (
+				decide_many_batched(_preview_requests, user=user) if _preview_requests else {}
+			)
+			allowed_preview = [
+				course
+				for course, request in zip(preview_courses, _preview_requests, strict=True)
+				if not _preview_decisions[request["key"]].handled
+				or _preview_decisions[request["key"]].allowed
+			]
+			if allowed_preview:
+				conditions.append(
+					f"(`tabCourse Lesson`.include_in_preview = 1 and "
+					f"`tabCourse Lesson`.course in ({_escaped_sql_list(allowed_preview)}))"
+				)
 
 	joined = " or ".join(conditions)
 	return f"({joined})"
+
+
+def _escaped_sql_list(values: list[str]) -> str:
+	return ", ".join(frappe.db.escape(value) for value in values)
 
 
 # Lesson content fields a student may reach vs. instructor-only fields (gated harder).
@@ -321,9 +381,31 @@ def save_progress(lesson: str, course: str, scorm_details: dict = None):
 
 
 def _save_progress(lesson: str, course: str, scorm_details: dict = None):
+	lesson_row = frappe.db.get_value("Course Lesson", lesson, ["course", "chapter"], as_dict=True)
+	if not lesson_row or not lesson_row.course:
+		frappe.throw(_("The lesson does not belong to a course."), frappe.ValidationError)
+	if course != lesson_row.course:
+		frappe.throw(_("The lesson does not belong to the supplied course."), frappe.PermissionError)
+
+	# Everything below must use the lesson's authoritative course. The endpoint's
+	# course argument is client-controlled and must never select membership,
+	# entitlement, sequential gates, progress aggregation, or enrollment writes.
+	course = lesson_row.course
 	membership = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
 	if not membership:
 		return 0
+
+	is_instructor, can_access = resolve_lesson_access(lesson)
+	if not can_access:
+		frappe.throw(_("You do not currently have access to this lesson."), frappe.PermissionError)
+	if not is_instructor:
+		entitlement = get_course_entitlement(
+			course,
+			"progress",
+			context={"lesson": lesson, "is_preview": False},
+		)
+		if entitlement.handled and not entitlement.allowed:
+			frappe.throw(_("You do not currently have access to record progress."), frappe.PermissionError)
 
 	# On a sequential course this endpoint writes the gate's own unlock state, so an
 	# enrolled student could otherwise complete every lesson name the outline publishes
@@ -400,6 +482,8 @@ def _save_progress(lesson: str, course: str, scorm_details: dict = None):
 			progress_already_exists,
 			{
 				"lesson": lesson,
+				"chapter": lesson_row.chapter,
+				"course": course,
 				"status": "Complete" if scorm_details.is_complete else "Partially Complete",
 				"member": frappe.session.user,
 				"scorm_content": "" if scorm_details.is_complete else scorm_details.scorm_content,

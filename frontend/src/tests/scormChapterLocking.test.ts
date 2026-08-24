@@ -100,12 +100,12 @@ import SCORMChapter from '@/pages/SCORMChapter.vue'
 const findResource = (url: string) =>
 	created.list.find((resource) => resource._config.url === url)
 
-async function mountChapter() {
+async function mountChapter(user: Record<string, unknown> = { name: 'student@example.com' }) {
 	const wrapper = mount(SCORMChapter, {
 		props: { courseName: 'COURSE-1', chapterName: 'CH-SCORM' },
 		global: {
 			mocks: { __: translateStub },
-			provide: { $user: { data: { name: 'student@example.com' } } },
+			provide: { $user: { data: user } },
 		},
 	})
 	await flushPromises()
@@ -196,6 +196,46 @@ describe('SCORMChapter.vue refuses a gated chapter', () => {
 		} finally {
 			vi.useRealTimers()
 		}
+	})
+
+	it('keeps the assigned course instructor bypass when the provider denies', async () => {
+		wrapper = await mountChapter({
+			name: 'instructor@example.com',
+			is_instructor: true,
+		})
+		findResource('lms.entitlements.get_entitlement_decision').data = {
+			handled: true,
+			allowed: false,
+			offers: [],
+		}
+		findResource('lms.lms.utils.get_course_details').data = {
+			instructors: [{ name: 'instructor@example.com' }],
+		}
+		findResource('lms.lms.utils.get_course_outline').data = openOutline
+		await resolveChapter()
+
+		expect(wrapper.find('iframe').exists()).toBe(true)
+		expect(wrapper.text()).not.toContain('Access to this course is locked')
+	})
+
+	it('does not treat an unrelated global Course Creator as course staff', async () => {
+		wrapper = await mountChapter({
+			name: 'other-instructor@example.com',
+			is_instructor: true,
+		})
+		findResource('lms.entitlements.get_entitlement_decision').data = {
+			handled: true,
+			allowed: false,
+			offers: [],
+		}
+		findResource('lms.lms.utils.get_course_details').data = {
+			instructors: [{ name: 'assigned-instructor@example.com' }],
+		}
+		findResource('lms.lms.utils.get_course_outline').data = openOutline
+		await resolveChapter()
+
+		expect(wrapper.find('iframe').exists()).toBe(false)
+		expect(wrapper.text()).toContain('Access to this course is locked')
 	})
 
 	it('renders the package once the chapter is unlocked', async () => {
