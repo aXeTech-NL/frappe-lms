@@ -349,6 +349,12 @@ def check_answer(quiz: str, question: str, question_type: str, answers: str):
 	if not frappe.db.exists("LMS Quiz Question", {"parent": quiz, "question": question}):
 		frappe.throw(_("Question not found in this quiz."), frappe.PermissionError)
 
+	from lms.lms.access import subscriptions_enabled
+	from lms.lms.permissions import can_access_quiz
+
+	if subscriptions_enabled() and not can_access_quiz(quiz):
+		frappe.throw(_("You are not authorized to access this quiz."), frappe.PermissionError)
+
 	if not is_admin and not frappe.db.get_value("LMS Quiz", quiz, "show_answers"):
 		frappe.throw(
 			_("Live answer checking is not enabled for this quiz."),
@@ -397,3 +403,39 @@ def check_input_answers(question: str, answer: str):
 		if possibility and fuzz.token_sort_ratio(possibility, answer) > 85:
 			return 1
 	return 0
+
+
+def has_permission(doc, ptype="read", user=None):
+	from lms.lms.access import subscriptions_enabled
+
+	user = user or frappe.session.user
+	roles = set(frappe.get_roles(user))
+	if not subscriptions_enabled():
+		# The hook is an additional restriction after normal DocPerm/share checks.
+		# Returning True preserves the exact pre-hook permission result.
+		return True
+
+	from lms.lms.permissions import can_access_quiz
+
+	if ptype in ("read", "select", "print"):
+		return can_access_quiz(doc.name, user=user)
+	if user == "Administrator" or roles & {"Moderator", "System Manager"}:
+		return True
+	return bool(doc.owner == user or can_access_quiz(doc.name, user=user))
+
+
+def get_permission_query_conditions(user=None):
+	from lms.lms.access import subscriptions_enabled
+
+	if not subscriptions_enabled():
+		return ""
+	user = user or frappe.session.user
+	roles = set(frappe.get_roles(user))
+	if user == "Administrator" or roles & {"Moderator", "System Manager"}:
+		return ""
+	from lms.lms.permissions import can_access_quiz
+
+	allowed = [name for name in frappe.get_all("LMS Quiz", pluck="name") if can_access_quiz(name, user=user)]
+	if not allowed:
+		return "1 = 0"
+	return f"`tabLMS Quiz`.name in ({', '.join(frappe.db.escape(name) for name in allowed)})"

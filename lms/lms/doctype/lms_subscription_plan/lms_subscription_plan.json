@@ -1,0 +1,139 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:plan_name",
+ "creation": "2026-08-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "plan_name",
+  "tier",
+  "enabled",
+  "column_break_interval",
+  "billing_interval",
+  "interval_count",
+  "pricing_section",
+  "amount",
+  "currency",
+  "column_break_usd",
+  "amount_usd"
+ ],
+ "fields": [
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plan Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Subscription Tier",
+   "options": "LMS Subscription Tier",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_interval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Month",
+   "fieldname": "billing_interval",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Billing Interval",
+   "options": "Month\nYear",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "interval_count",
+   "fieldtype": "Int",
+   "label": "Interval Count",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "pricing_section",
+   "fieldtype": "Section Break",
+   "label": "Pricing"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_usd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional explicit USD price used by LMS multi-currency checkout.",
+   "fieldname": "amount_usd",
+   "fieldtype": "Currency",
+   "label": "Amount (USD)"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS",
+ "name": "LMS Subscription Plan",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Moderator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "plan_name",
+ "track_changes": 1
+}

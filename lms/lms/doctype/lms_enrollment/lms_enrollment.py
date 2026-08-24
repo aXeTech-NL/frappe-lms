@@ -11,24 +11,67 @@ from frappe.utils import ceil
 
 class LMSEnrollment(Document):
 	def before_insert(self):
+		self.bind_member_for_self_enrollment()
 		self.validate_duplicate_enrollment()
 		self.validate_course_enrollment_eligibility()
+		self.set_access_provenance()
 		self.validate_owner()
+
+	def bind_member_for_self_enrollment(self):
+		from lms.lms.access import subscriptions_enabled
+		from lms.lms.utils import PRIVILEGED_ROLES
+
+		if self.enrollment_from_batch or self.enrollment_from_program:
+			return
+		if self.flags.get("payment_fulfillment") and self.payment:
+			trusted_payment = frappe.db.exists(
+				"LMS Payment",
+				{
+					"name": self.payment,
+					"member": self.member,
+					"payment_for_document_type": "LMS Course",
+					"payment_for_document": self.course,
+					"payment_received": 1,
+				},
+			)
+			if trusted_payment:
+				return
+		if subscriptions_enabled() and not (PRIVILEGED_ROLES & set(frappe.get_roles())):
+			self.member = frappe.session.user
 
 	def validate(self):
 		self.enforce_server_managed_fields()
 
 	def enforce_server_managed_fields(self):
-		"""Revert progress / purchased_certificate to their server-set values for non-staff."""
+		"""Protect enrollment identity, progress and entitlement provenance."""
 		from lms.lms.utils import PRIVILEGED_ROLES
 
-		if PRIVILEGED_ROLES & set(frappe.get_roles()):
+		if self.flags.get("ignore_access_protection") or PRIVILEGED_ROLES & set(frappe.get_roles()):
 			return
 
 		previous = None if self.is_new() else self.get_doc_before_save()
-		defaults = {"progress": 0, "purchased_certificate": 0}
-		for field, default in defaults.items():
-			setattr(self, field, previous.get(field) if previous else default)
+		if previous:
+			protected = [
+				"progress",
+				"purchased_certificate",
+				"access_source",
+				"permanent_access",
+				"subscription",
+				"enrollment_from_program",
+			]
+			from lms.lms.access import subscriptions_enabled
+
+			if subscriptions_enabled():
+				protected.extend(("course", "member", "payment", "enrollment_from_batch"))
+			for field in protected:
+				self.set(field, previous.get(field))
+			return
+
+		# before_insert has already replaced every entitlement field with trusted
+		# provenance. Keep that result while retaining the established protection
+		# for learner-managed progress/certificate fields.
+		self.progress = 0
+		self.purchased_certificate = 0
 
 	def validate_owner(self):
 		"""Makes the member as the owner of the document so that users can update their progress"""
@@ -82,10 +125,38 @@ class LMSEnrollment(Document):
 			):
 				return
 
+		if self.enrollment_from_program:
+			if not frappe.db.exists(
+				"LMS Program Course", {"parent": self.enrollment_from_program, "course": self.course}
+			):
+				frappe.throw(_("This program is not associated with this course."))
+
+			from lms.lms.access import get_program_access, subscriptions_enabled
+
+			if subscriptions_enabled() and not is_admin():
+				is_member = frappe.db.exists(
+					"LMS Program Member",
+					{"parent": self.enrollment_from_program, "member": self.member},
+				)
+				if not is_member or not get_program_access(self.enrollment_from_program, self.member).allowed:
+					frappe.throw(_("You do not have access to this program."))
+				return
+
 		if not course_details.published and not is_admin():
 			frappe.throw(_("You cannot enroll in an unpublished course."))
 
-		if course_details.paid_course and not is_admin():
+		if is_admin():
+			return
+
+		from lms.lms.access import get_course_access, subscriptions_enabled
+
+		if subscriptions_enabled():
+			access = get_course_access(self.course, self.member, require_enrollment=False)
+			if not access.allowed:
+				frappe.throw(_("You do not have a valid entitlement for this course."))
+			return
+
+		if course_details.paid_course:
 			payment = frappe.db.exists(
 				"LMS Payment",
 				{
@@ -98,6 +169,34 @@ class LMSEnrollment(Document):
 
 			if not payment:
 				frappe.throw(_("You need to complete the payment for this course before enrolling."))
+
+	def set_access_provenance(self):
+		from lms.lms.access import provenance_for_course_enrollment, subscriptions_enabled
+
+		provenance = provenance_for_course_enrollment(
+			self.course,
+			self.member,
+			enrollment_from_batch=self.enrollment_from_batch,
+			enrollment_from_program=self.enrollment_from_program,
+		)
+		contextual_enrollment = bool(self.enrollment_from_batch or self.enrollment_from_program)
+		is_access_manager = is_admin() or (subscriptions_enabled() and "System Manager" in frappe.get_roles())
+		# Batch and Program provenance must stay dynamic even when their parent
+		# enrollment is created by an administrator. A received direct payment is
+		# likewise stronger evidence than the callback's current session role.
+		if is_access_manager and not contextual_enrollment and provenance.get("access_source") != "Purchase":
+			provenance = frappe._dict(access_source="Manual", permanent_access=1)
+
+		if not provenance and subscriptions_enabled():
+			frappe.throw(_("Could not determine the access source for this enrollment."))
+		payment_default = None if subscriptions_enabled() else self.payment
+		for field, default in {
+			"access_source": None,
+			"permanent_access": 0,
+			"subscription": None,
+			"payment": payment_default,
+		}.items():
+			self.set(field, provenance.get(field, default))
 
 
 def is_admin():
@@ -116,6 +215,7 @@ def update_program_progress(member):
 		total_progress = 0
 		courses = frappe.get_all("LMS Program Course", {"parent": program.parent}, pluck="course")
 		if not courses:
+			frappe.db.set_value("LMS Program Member", program.name, "progress", 0)
 			continue
 
 		for course in courses:

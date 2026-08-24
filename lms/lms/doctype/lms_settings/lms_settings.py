@@ -13,6 +13,18 @@ class LMSSettings(Document):
 		self.validate_signup()
 		self.validate_contact_us_details()
 		self.validate_lesson_dwell_time()
+		self.prepare_subscription_media()
+
+	def prepare_subscription_media(self):
+		if not self.get("enable_subscriptions") or not self.has_value_changed("enable_subscriptions"):
+			return
+
+		# Public SCORM bytes bypass Python under the standard nginx config. Move
+		# legacy packages behind the access-aware renderer before this setting can
+		# be enabled; leaving them public would make the feature flag fail open.
+		from lms.patches.v2_0.prepare_subscription_entitlements import move_public_scorm_packages
+
+		move_public_scorm_packages()
 
 	def validate_lesson_dwell_time(self):
 		if cint(self.lesson_dwell_time) < 1:

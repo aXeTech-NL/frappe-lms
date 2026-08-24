@@ -12,7 +12,11 @@ from lms.lms.utils import get_lms_route
 
 
 class LMSPayment(Document):
-	pass
+	def validate(self):
+		# payment_received remains the backwards-compatible fulfillment flag.
+		# New lifecycle code records richer states without rewriting old callers.
+		if self.payment_received and self.payment_status == "Pending":
+			self.payment_status = "Paid"
 
 
 UNIQUE_PAYMENT_ID = "unique_payment_id"

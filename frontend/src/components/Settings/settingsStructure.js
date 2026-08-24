@@ -11,6 +11,8 @@ import ZoomSettings from '@/components/Settings/ZoomSettings.vue'
 import GoogleMeetSettings from '@/components/Settings/GoogleMeetSettings.vue'
 import Badges from '@/components/Settings/Badges/Badges.vue'
 import RavenSettings from '@/components/Settings/Raven/RavenSettings.vue'
+import SubscriptionManagement from '@/components/Settings/SubscriptionManagement.vue'
+import { useSettings } from '@/stores/settings'
 
 // The settings tree, lifted out of Settings.vue so the desktop dialog and the
 // mobile settings pages read the same source rather than drifting apart. It was
@@ -36,6 +38,13 @@ export const settingsStructure = [
 										name: 'allow_guest_access',
 										description:
 											'If enabled, users can access the course and batch lists without logging in.',
+										type: 'checkbox',
+									},
+									{
+										label: 'Enable Subscriptions',
+										name: 'enable_subscriptions',
+										description:
+											'Enable tier-based access. Lesson content then requires a signed-in member.',
 										type: 'checkbox',
 									},
 									{
@@ -394,6 +403,18 @@ export const settingsStructure = [
 						],
 					},
 				],
+			},
+			{
+				label: 'Subscription Tiers and Plans',
+				icon: 'lucide-layers',
+				template: markRaw(SubscriptionManagement),
+				description:
+					'Manage hierarchical subscription tiers and billing plans',
+				condition: () =>
+					Boolean(
+						useSettings().settings.data?.enable_subscriptions &&
+						useSettings().settings.data?.is_payments_app_installed,
+					),
 			},
 			{
 				label: 'Gateways',

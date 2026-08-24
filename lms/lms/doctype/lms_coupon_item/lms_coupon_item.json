@@ -15,7 +15,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Reference DocType",
-   "options": "\nLMS Course\nLMS Batch",
+   "options": "\nLMS Course\nLMS Batch\nLMS Program",
    "reqd": 1
   },
   {

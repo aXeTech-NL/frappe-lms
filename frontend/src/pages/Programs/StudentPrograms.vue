@@ -40,6 +40,19 @@
 							</div>
 						</div>
 
+						<div v-if="subscriptionsEnabled" class="flex flex-wrap gap-2 mt-3">
+							<Badge v-if="program.required_subscription_tier" theme="blue">
+								{{
+									__('Included in {0}').format(
+										program.required_subscription_tier,
+									)
+								}}
+							</Badge>
+							<Badge v-if="program.paid_program" theme="green">
+								{{ __('Available for purchase') }}
+							</Badge>
+						</div>
+
 						<div v-if="Object.keys(program).includes('progress')" class="mt-5">
 							<ProgressBar :progress="program.progress" />
 							<div class="text-sm text-ink-gray-7 mt-1">
@@ -59,7 +72,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { createResource, TabButtons } from 'frappe-ui'
+import { Badge, createResource, TabButtons } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
 import { useRouter } from 'vue-router'
@@ -67,9 +80,14 @@ import { convertToTitleCase } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 import EmptyStateLayout from '@/components/Layouts/EmptyStateLayout.vue'
 import { openFormRoute } from '@/composables/useFormRoute'
+import { useSettings } from '@/stores/settings'
 
 const currentTab = ref('enrolled')
 const router = useRouter()
+const settingsStore = useSettings()
+const subscriptionsEnabled = computed(() =>
+	Boolean(settingsStore.settings.data?.enable_subscriptions),
+)
 
 const programs = createResource({
 	url: 'lms.lms.utils.get_programs',

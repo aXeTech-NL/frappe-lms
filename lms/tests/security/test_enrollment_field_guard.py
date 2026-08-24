@@ -15,6 +15,9 @@ class TestEnrollmentFieldGuard(BaseTestUtils, FrappeAPITestCase):
 		self.student = self._create_user(f"efstud-{hash}@example.com", "Eli", "Student", ["LMS Student"])
 		self.moderator = self._create_user(f"efmod-{hash}@example.com", "Mac", "Derator", ["Moderator"])
 		self.course = self._create_course(title=f"Guard Course {hash}", instructor=self.moderator.email)
+		self.other_course = self._create_course(
+			title=f"Other Guard Course {hash}", instructor=self.moderator.email
+		)
 		self.enrollment = self._create_enrollment(self.student.email, self.course.name)
 
 	def _as(self, user, mutate):
@@ -42,6 +45,24 @@ class TestEnrollmentFieldGuard(BaseTestUtils, FrappeAPITestCase):
 
 		self._as(self.student.email, mutate)
 		self.assertEqual(self._stored("purchased_certificate"), 0)
+
+	def test_student_cannot_change_access_provenance(self):
+		before = frappe.db.get_value(
+			"LMS Enrollment",
+			self.enrollment.name,
+			["course", "member", "access_source", "permanent_access"],
+			as_dict=True,
+		)
+
+		def mutate(doc):
+			doc.course = self.other_course.name
+			doc.member = self.moderator.email
+			doc.access_source = "Subscription"
+			doc.permanent_access = 0 if before.permanent_access else 1
+
+		self._as(self.student.email, mutate)
+		for field in ("course", "member", "access_source", "permanent_access"):
+			self.assertEqual(self._stored(field), before.get(field))
 
 	def test_moderator_can_set_progress(self):
 		def mutate(doc):

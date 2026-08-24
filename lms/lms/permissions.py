@@ -10,11 +10,13 @@ core (frappe/permissions.py), CRM (crm.permissions.*), and Raven (raven.permissi
 """
 
 import frappe
+from frappe.query_builder.functions import Locate
 
+from lms.lms.access import get_course_access, subscriptions_enabled
 from lms.lms.utils import (
 	can_modify_batch,
 	can_modify_course,
-	get_membership,
+	get_editorjs_blocks,
 	guest_access_allowed,
 	has_moderator_role,
 )
@@ -48,14 +50,14 @@ def resolve_lesson_access(lesson: str, *, user: str | None = None) -> tuple[bool
 		frappe.session.user = user
 		if can_modify_course(lesson_row.course):
 			return True, True
-		if get_membership(lesson_row.course, user):
+		if get_course_access(lesson_row.course, user).allowed:
 			return False, True
-		# Preview is for prospective students of a LIVE course. Require the course to be
-		# published so draft lessons don't leak via this gate (matches get_course_details,
-		# which already hides unpublished courses from non-authors). Instructors/members
-		# are handled above, so unpublishing never locks them out.
+		# Subscription sites require authentication for every lesson, including
+		# previews. With the feature disabled this remains the legacy prospective-
+		# learner preview rule.
 		if (
-			lesson_row.include_in_preview
+			not subscriptions_enabled()
+			and lesson_row.include_in_preview
 			and frappe.db.get_value("LMS Course", lesson_row.course, "published")
 			and guest_access_allowed()
 		):
@@ -115,7 +117,7 @@ def can_access_quiz(quiz: str, *, user: str | None = None) -> bool:
 			courses.add(quiz_row.course)
 		courses.update(frappe.get_all("Course Lesson", filters={"quiz_id": quiz}, pluck="course"))
 		for course in courses:
-			if course and (can_modify_course(course) or get_membership(course, user)):
+			if course and (can_modify_course(course) or get_course_access(course, user).allowed):
 				return True
 
 		assessment_batches = frappe.get_all(
@@ -131,6 +133,62 @@ def can_access_quiz(quiz: str, *, user: str | None = None) -> bool:
 				return True
 
 		return False
+	finally:
+		frappe.session.user = original_user
+
+
+ASSESSMENT_BLOCKS = {
+	"LMS Assignment": ("assignment", "assignment"),
+	"LMS Programming Exercise": ("program", "exercise"),
+}
+
+
+def can_access_assessment(doctype: str, name: str, *, user: str | None = None) -> bool:
+	"""Authorize an Assignment/Programming Exercise through an accessible lesson or batch."""
+	if doctype not in ASSESSMENT_BLOCKS or not isinstance(name, str) or not name:
+		return False
+	if not frappe.db.exists(doctype, name):
+		return False
+
+	original_user = frappe.session.user
+	user = user or original_user
+	try:
+		frappe.session.user = user
+		roles = set(frappe.get_roles(user))
+		if user == "Administrator" or roles & {
+			"Moderator",
+			"Course Creator",
+			"Batch Evaluator",
+			"System Manager",
+		}:
+			return True
+
+		block_type, data_field = ASSESSMENT_BLOCKS[doctype]
+		lesson = frappe.qb.DocType("Course Lesson")
+		candidates = (
+			frappe.qb.from_(lesson)
+			.select(lesson.name, lesson.content)
+			.where(Locate(name, lesson.content) > 0)
+		).run(as_dict=True)
+		for candidate in candidates:
+			for block in get_editorjs_blocks(candidate.content):
+				if block.get("type") != block_type:
+					continue
+				if (block.get("data") or {}).get(data_field) == name and can_access_lesson(
+					candidate.name, user=user
+				):
+					return True
+
+		batches = frappe.get_all(
+			"LMS Assessment",
+			filters={"assessment_type": doctype, "assessment_name": name},
+			pluck="parent",
+		)
+		return any(
+			can_modify_batch(batch)
+			or frappe.db.exists("LMS Batch Enrollment", {"batch": batch, "member": user})
+			for batch in batches
+		)
 	finally:
 		frappe.session.user = original_user
 

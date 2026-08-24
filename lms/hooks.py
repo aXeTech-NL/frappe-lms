@@ -94,6 +94,9 @@ permission_query_conditions = {
 	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.get_permission_query_conditions",
 	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.get_permission_query_conditions",
 	"LMS Program": "lms.lms.doctype.lms_program.lms_program.get_permission_query_conditions",
+	"LMS Quiz": "lms.lms.doctype.lms_quiz.lms_quiz.get_permission_query_conditions",
+	"LMS Assignment": "lms.lms.doctype.lms_assignment.lms_assignment.get_permission_query_conditions",
+	"LMS Programming Exercise": "lms.lms.doctype.lms_programming_exercise.lms_programming_exercise.get_permission_query_conditions",
 	"Course Lesson": "lms.lms.doctype.course_lesson.course_lesson.get_permission_query_conditions",
 }
 
@@ -101,6 +104,9 @@ has_permission = {
 	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.has_permission",
 	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.has_permission",
 	"LMS Program": "lms.lms.doctype.lms_program.lms_program.has_permission",
+	"LMS Quiz": "lms.lms.doctype.lms_quiz.lms_quiz.has_permission",
+	"LMS Assignment": "lms.lms.doctype.lms_assignment.lms_assignment.has_permission",
+	"LMS Programming Exercise": "lms.lms.doctype.lms_programming_exercise.lms_programming_exercise.has_permission",
 	"LMS Certificate": "lms.lms.doctype.lms_certificate.lms_certificate.has_permission",
 	"Course Lesson": "lms.lms.doctype.course_lesson.course_lesson.has_permission",
 	"File": "lms.lms.permissions.file_has_permission",
@@ -154,6 +160,7 @@ scheduler_events = {
 		"lms.lms.doctype.lms_live_class.lms_live_class.send_live_class_reminder",
 		"lms.lms.doctype.lms_course.lms_course.send_notification_for_published_courses",
 		"lms.lms.doctype.course_lesson.course_lesson.rename_settled_untitled_lessons",
+		"lms.lms.subscriptions.reconcile_subscriptions",
 	],
 }
 

@@ -11,11 +11,14 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { call, getSidebarLinks, settings } = vi.hoisted(() => ({
-	call: vi.fn(),
-	getSidebarLinks: vi.fn(),
-	settings: { data: undefined as unknown },
-}))
+const { call, getSidebarLinks, settings, lmsSettings, loadSettings } =
+	vi.hoisted(() => ({
+		call: vi.fn(),
+		getSidebarLinks: vi.fn(),
+		settings: { data: undefined as unknown },
+		lmsSettings: { data: undefined as any },
+		loadSettings: vi.fn(),
+	}))
 
 vi.mock('frappe-ui', () => ({ call }))
 
@@ -23,7 +26,9 @@ vi.mock('@/utils', () => ({ getSidebarLinks }))
 
 vi.mock('@/stores/settings', () => ({
 	useSettings: () => ({
+		settings: lmsSettings,
 		sidebarSettings: settings,
+		loadSettings,
 		loadSidebarSettings: () => Promise.resolve(settings.data),
 	}),
 }))
@@ -63,6 +68,8 @@ beforeEach(() => {
 	sidebarLinks.value = []
 	otherLinks.value = []
 	settings.data = {}
+	lmsSettings.data = {}
+	loadSettings.mockImplementation(() => Promise.resolve(lmsSettings.data))
 	getSidebarLinks.mockReturnValue(structuredClone(SIDEBAR))
 	call.mockResolvedValue({ enrolled: [], published: [] })
 })
@@ -86,6 +93,29 @@ describe('loadMobileNavLinks', () => {
 		await loadMobileNavLinks(MODERATOR)
 		expect(labels(sidebarLinks)).toEqual(['Home', 'Courses', 'Batches', 'Jobs'])
 		expect(labels(otherLinks)).toEqual([])
+	})
+
+	it('rebuilds links after asynchronously loading the subscription flag', async () => {
+		lmsSettings.data = undefined
+		loadSettings.mockImplementation(async () => {
+			lmsSettings.data = { enable_subscriptions: 1 }
+			return lmsSettings.data
+		})
+		getSidebarLinks.mockImplementation(() => {
+			const links = structuredClone(SIDEBAR)
+			if (lmsSettings.data?.enable_subscriptions) {
+				links[1].items.splice(1, 0, {
+					label: 'Subscriptions',
+					icon: 'CreditCard',
+					to: 'Subscriptions',
+				})
+			}
+			return links
+		})
+
+		await loadMobileNavLinks(LEARNER)
+		expect(labels(sidebarLinks)).toContain('Subscriptions')
+		expect(getSidebarLinks).toHaveBeenCalledTimes(2)
 	})
 
 	it('adds Programs next to Courses for a moderator, without asking', async () => {

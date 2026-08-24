@@ -53,9 +53,24 @@ export interface Membership {
 	certificate?: string
 }
 
-export interface CourseDetails
-	extends Omit<LMSCourse, 'instructors' | 'rating'> {
+export interface AccessDecision {
+	allowed: boolean
+	source?: string
+	reason?: string
+	required_tier?: string
+	can_purchase?: boolean
+	subscription?: string
+	tier?: string
+	payment?: string
+	program?: string
+}
+
+export interface CourseDetails extends Omit<
+	LMSCourse,
+	'instructors' | 'rating'
+> {
 	price?: string
+	access?: AccessDecision
 	current_lesson?: string
 	instructors: CourseInstructorInfo[]
 	membership?: Membership | null

@@ -17,7 +17,7 @@
 					placement="right"
 					:text="
 						__(
-							'Courses must be completed in order. You can only start the next course after completing the previous one.'
+							'Courses must be completed in order. You can only start the next course after completing the previous one.',
 						)
 					"
 				>
@@ -27,7 +27,35 @@
 		</template>
 
 		<div v-if="program.data" class="px-5 pb-10">
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
+			<div
+				v-if="!entitled"
+				data-testid="program-access-expired"
+				class="rounded-md border border-outline-amber-2 bg-surface-amber-2 p-5 mb-5"
+			>
+				<h2 class="text-lg-semibold text-ink-gray-9">
+					{{ __('Access required') }}
+				</h2>
+				<p class="text-ink-gray-7 mt-1 mb-4">
+					{{ recoveryMessage }}
+				</p>
+				<div class="flex flex-wrap gap-2">
+					<router-link v-if="program.data.paid_program" :to="purchaseRoute">
+						<Button variant="solid">{{ __('Buy program') }}</Button>
+					</router-link>
+					<router-link
+						v-if="program.data.required_subscription_tier"
+						:to="{ name: 'Subscriptions' }"
+					>
+						<Button variant="outline">
+							{{ __('View subscription plans') }}
+						</Button>
+					</router-link>
+				</div>
+			</div>
+			<div
+				v-else
+				class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5"
+			>
 				<div
 					v-for="course in program.data.courses"
 					:key="course.name"
@@ -67,7 +95,14 @@
 import { computed, inject, onMounted } from 'vue'
 import PageHeader from '@/components/Layouts/PageHeader.vue'
 import PageBody from '@/components/Layouts/PageBody.vue'
-import { Badge, call, createResource, Tooltip, usePageMeta } from 'frappe-ui'
+import {
+	Badge,
+	Button,
+	call,
+	createResource,
+	Tooltip,
+	usePageMeta,
+} from 'frappe-ui'
 import { sessionStore } from '@/stores/session'
 
 import { useRouter } from 'vue-router'
@@ -108,6 +143,27 @@ const program = createResource({
 	params: {
 		program_name: props.programName,
 	},
+})
+
+const entitled = computed(() =>
+	program.data?.access ? Boolean(program.data.access.allowed) : true,
+)
+const purchaseRoute = computed(() => ({
+	name: 'Billing',
+	params: { type: 'program', name: props.programName },
+}))
+const recoveryMessage = computed(() => {
+	const canPurchase = Boolean(program.data?.paid_program)
+	const tier = program.data?.required_subscription_tier
+	if (canPurchase && tier)
+		return __(
+			'Your progress is saved. Purchase this program or renew the required subscription to continue.',
+		)
+	if (canPurchase)
+		return __('Your progress is saved. Purchase this program to continue.')
+	return __(
+		'Your progress is saved. Renew the required subscription to continue.',
+	)
 })
 
 const openCourse = (course: any, enforceCourseOrder: boolean) => {

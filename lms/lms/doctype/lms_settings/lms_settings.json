@@ -7,6 +7,7 @@
 	"field_order": [
 		"general_tab",
 		"allow_guest_access",
+		"enable_subscriptions",
 		"prevent_skipping_videos",
 		"send_calendar_invite_for_evaluations",
 		"column_break_zdel",
@@ -361,6 +362,13 @@
 			"fieldname": "allow_guest_access",
 			"fieldtype": "Check",
 			"label": "Allow Guest Access"
+		},
+		{
+			"default": "0",
+			"description": "Enable subscription tiers and entitlement checks. Existing LMS behavior is preserved while disabled.",
+			"fieldname": "enable_subscriptions",
+			"fieldtype": "Check",
+			"label": "Enable Subscriptions"
 		},
 		{
 			"fieldname": "payment_reminder_template",

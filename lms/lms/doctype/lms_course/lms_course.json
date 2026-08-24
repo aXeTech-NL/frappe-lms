@@ -34,6 +34,7 @@
   "pricing_tab",
   "pricing_section",
   "paid_course",
+  "required_subscription_tier",
   "paid_certificate",
   "column_break_acoj",
   "enable_certification",
@@ -176,6 +177,13 @@
    "fieldname": "paid_course",
    "fieldtype": "Check",
    "label": "Paid Course"
+  },
+  {
+   "description": "When subscriptions are enabled, members at this tier or above may enroll. Keep empty for content that is not included in a subscription.",
+   "fieldname": "required_subscription_tier",
+   "fieldtype": "Link",
+   "label": "Minimum Subscription Tier",
+   "options": "LMS Subscription Tier"
   },
   {
    "fieldname": "course_price",

@@ -49,7 +49,7 @@ createListResourceMock.mockImplementation((options: any) => {
 		answer(rows: any[]) {
 			if (resource.reload.mock.calls.length === 0) {
 				throw new Error(
-					`answered ${options.doctype}, which the form never reloaded`
+					`answered ${options.doctype}, which the form never reloaded`,
 				)
 			}
 			resource.data = rows
@@ -117,6 +117,12 @@ vi.mock('frappe-ui', () => ({
 	ListRows: passthrough,
 	ListRow: passthrough,
 	ListSelectBanner: { template: `<div />` },
+}))
+
+vi.mock('@/stores/settings', () => ({
+	useSettings: () => ({
+		settings: reactive({ data: { enable_subscriptions: true } }),
+	}),
 }))
 
 vi.mock('@/utils', () => ({
@@ -202,7 +208,7 @@ const mountForm = async (router: Router, user: Record<string, unknown>) => {
 
 const deepLink = async (
 	programName: string,
-	user: Record<string, unknown> = moderator
+	user: Record<string, unknown> = moderator,
 ) => {
 	const router = makeRouter()
 	await router.push(`/programs/${programName}/edit`)
@@ -222,7 +228,12 @@ const MEMBER_ROWS = [
 
 // Every label the form is meant to collect. Pin the set: a field lost in the
 // modal→page move is otherwise invisible to the rest of the suite.
-const FIELD_LABELS = ['Title', 'Published', 'Enforce Course Order']
+const FIELD_LABELS = [
+	'Title',
+	'Published',
+	'Enforce Course Order',
+	'Available for direct purchase',
+]
 
 beforeEach(() => {
 	resources.lists.length = 0
@@ -292,7 +303,8 @@ describe('ProgramForm as a route', () => {
 		const wrapper = await mountForm(router, moderator)
 
 		insertSubmit.mockImplementation(
-			(_doc: unknown, options: { onSuccess: () => void }) => options.onSuccess()
+			(_doc: unknown, options: { onSuccess: () => void }) =>
+				options.onSuccess(),
 		)
 		await wrapper.find('[data-testid="program-save"]').trigger('click')
 		await flushPromises()
@@ -316,7 +328,8 @@ describe('ProgramForm as a route', () => {
 		const wrapper = await mountForm(router, moderator)
 
 		insertSubmit.mockImplementation(
-			(_doc: unknown, options: { onSuccess: () => void }) => options.onSuccess()
+			(_doc: unknown, options: { onSuccess: () => void }) =>
+				options.onSuccess(),
 		)
 		await wrapper.find('[data-testid="program-save"]').trigger('click')
 		await flushPromises()
@@ -373,7 +386,7 @@ describe('ProgramForm as a route', () => {
 					doctype: 'LMS Program',
 					name: 'data-science',
 					auto: true,
-				})
+				}),
 			)
 
 			// And the fetched document is what fills the form.
@@ -385,7 +398,7 @@ describe('ProgramForm as a route', () => {
 			})
 			await flushPromises()
 			expect(
-				(wrapper.find('input[type="text"]').element as HTMLInputElement).value
+				(wrapper.find('input[type="text"]').element as HTMLInputElement).value,
 			).toBe('data-science')
 		})
 
@@ -403,6 +416,99 @@ describe('ProgramForm as a route', () => {
 				})
 				expect(resource.reload).toHaveBeenCalledTimes(1)
 			}
+		})
+
+		it('loads and persists subscription pricing fields', async () => {
+			const { wrapper } = await deepLink('data-science')
+			resources.docs[0].answer({
+				name: 'data-science',
+				title: 'data-science',
+				published: 1,
+				enforce_course_order: 0,
+				paid_program: 1,
+				required_subscription_tier: 'Max',
+				program_price: 120,
+				currency: 'EUR',
+				amount_usd: 130,
+			})
+			listFor('LMS Program Course').answer(COURSE_ROWS)
+			listFor('LMS Program Member').answer(MEMBER_ROWS)
+			await flushPromises()
+			expect(wrapper.find('[data-testid="program-pricing"]').exists()).toBe(
+				true,
+			)
+			await wrapper.find('[data-testid="program-save"]').trigger('click')
+			expect(setValueSubmit.mock.calls[0][0]).toMatchObject({
+				paid_program: true,
+				required_subscription_tier: 'Max',
+				program_price: 120,
+				currency: 'EUR',
+			})
+		})
+
+		it('keeps Save disabled until the document and both child tables are loaded', async () => {
+			const { wrapper } = await deepLink('data-science')
+			resources.docs[0].answer({
+				name: 'data-science',
+				title: 'Data Science',
+				published: 1,
+				enforce_course_order: 0,
+			})
+			await flushPromises()
+
+			const save = wrapper.find('[data-testid="program-save"]')
+			expect(save.attributes('disabled')).toBeDefined()
+			await save.trigger('click')
+			expect(setValueSubmit).not.toHaveBeenCalled()
+
+			listFor('LMS Program Course').answer(COURSE_ROWS)
+			listFor('LMS Program Member').answer(MEMBER_ROWS)
+			await flushPromises()
+			expect(save.attributes('disabled')).toBeUndefined()
+		})
+
+		it('persists an edited title while addressing the original docname', async () => {
+			const { wrapper } = await deepLink('data-science')
+			resources.docs[0].answer({
+				name: 'data-science',
+				title: 'Data Science',
+				published: 1,
+				enforce_course_order: 0,
+			})
+			listFor('LMS Program Course').answer(COURSE_ROWS)
+			listFor('LMS Program Member').answer(MEMBER_ROWS)
+			await flushPromises()
+
+			await wrapper.find('input[type="text"]').setValue('Applied AI')
+			await wrapper.find('[data-testid="program-save"]').trigger('click')
+			expect(setValueSubmit.mock.calls[0][0]).toMatchObject({
+				name: 'data-science',
+				title: 'Applied AI',
+			})
+		})
+
+		it('retains the dirty indicator when an edit save fails', async () => {
+			const { wrapper } = await deepLink('data-science')
+			resources.docs[0].answer({
+				name: 'data-science',
+				title: 'Data Science',
+				published: 1,
+				enforce_course_order: 0,
+			})
+			listFor('LMS Program Course').answer(COURSE_ROWS)
+			listFor('LMS Program Member').answer(MEMBER_ROWS)
+			setValueSubmit.mockImplementation(
+				(_payload: unknown, options: { onError: (error: Error) => void }) =>
+					options.onError(new Error('save failed')),
+			)
+			await flushPromises()
+
+			const title = wrapper.find('input[type="text"]')
+			await title.setValue('Changed')
+			await title.trigger('change')
+			await wrapper.find('[data-testid="program-save"]').trigger('click')
+			await flushPromises()
+			expect((wrapper.findComponent(ProgramForm).vm as any).dirty).toBe(true)
 		})
 
 		it('does not wipe the child tables when saved straight after a deep link', async () => {

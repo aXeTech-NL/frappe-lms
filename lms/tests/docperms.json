@@ -831,6 +831,39 @@
 			"export"
 		]
 	},
+	"LMS Subscription": {
+		"Moderator#0": [
+			"read",
+			"write",
+			"create",
+			"delete",
+			"share",
+			"report",
+			"export"
+		]
+	},
+	"LMS Subscription Plan": {
+		"Moderator#0": [
+			"read",
+			"write",
+			"create",
+			"delete",
+			"share",
+			"report",
+			"export"
+		]
+	},
+	"LMS Subscription Tier": {
+		"Moderator#0": [
+			"read",
+			"write",
+			"create",
+			"delete",
+			"share",
+			"report",
+			"export"
+		]
+	},
 	"LMS Timetable Template": {
 		"Moderator#0": [
 			"read",

@@ -9,77 +9,76 @@
 				{{ priceLabel }}
 			</div>
 			<div v-if="!readOnlyMode">
-				<div v-if="course.data?.membership" class="space-y-2 mb-8">
-					<router-link
-						:to="{
-							name: 'Lesson',
-							params: {
-								courseName: course.data?.name,
-								chapterNumber: course?.data?.current_lesson
-									? course?.data?.current_lesson.split('-')[0]
-									: 1,
-								lessonNumber: course?.data?.current_lesson
-									? course?.data?.current_lesson.split('-')[1]
-									: 1,
-							},
-						}"
-					>
+				<div v-if="canContinue" class="space-y-2 mb-8">
+					<router-link :to="lessonRoute">
 						<Button variant="solid" size="md" class="w-full">
-							<template #prefix>
-								<span class="lucide-book-text size-4" />
-							</template>
-							<span>
-								{{ __('Continue Learning') }}
-							</span>
+							<template #prefix
+								><span class="lucide-book-text size-4"
+							/></template>
+							{{ __('Continue Learning') }}
 						</Button>
 					</router-link>
 					<CertificationLinks :courseName="course.data.name" class="w-full" />
 				</div>
-				<router-link
-					v-else-if="course.data?.paid_course && !isAdmin"
-					:to="{
-						name: 'Billing',
-						params: {
-							type: 'course',
-							name: course.data.name,
-						},
-					}"
-				>
+				<div v-else-if="!isAdmin" class="space-y-2 mb-8">
 					<Button
+						v-if="needsLogin"
+						data-testid="course-login"
 						variant="solid"
-						size="md"
-						class="w-full mb-8 text-p-base-medium"
+						class="w-full"
+						@click="login"
 					>
-						<template #prefix>
-							<span class="lucide-credit-card size-4" />
-						</template>
-						<span>
-							{{ __('Buy this course') }}
-						</span>
+						{{ __('Log in to enroll') }}
 					</Button>
-				</router-link>
-				<Badge
-					v-else-if="course.data?.disable_self_learning && !isAdmin"
-					theme="blue"
-					size="lg"
-					class="mb-4"
-				>
-					{{ __('Contact the Administrator to enroll for this course') }}
-				</Badge>
-				<Button
-					v-else-if="!isAdmin"
-					@click="enrollStudent()"
-					variant="solid"
-					class="w-full mb-8"
-					size="md"
-				>
-					<template #prefix>
-						<span class="lucide-book-text size-4" />
-					</template>
-					<span>
+					<Badge
+						v-else-if="course.data?.disable_self_learning && canEnroll"
+						theme="blue"
+						size="lg"
+						class="mb-4"
+					>
+						{{ __('Contact the Administrator to enroll for this course') }}
+					</Badge>
+					<Button
+						v-else-if="canEnroll"
+						data-testid="course-enroll"
+						@click="enrollStudent()"
+						variant="solid"
+						class="w-full"
+						size="md"
+					>
+						<template #prefix
+							><span class="lucide-book-text size-4"
+						/></template>
 						{{ __('Enroll Now') }}
-					</span>
-				</Button>
+					</Button>
+					<router-link v-if="canPurchase" :to="purchaseRoute">
+						<Button
+							data-testid="course-purchase"
+							variant="solid"
+							size="md"
+							class="w-full"
+						>
+							<template #prefix
+								><span class="lucide-credit-card size-4"
+							/></template>
+							{{ __('Buy this course') }}
+						</Button>
+					</router-link>
+					<router-link v-if="canSubscribe" :to="{ name: 'Subscriptions' }">
+						<Button
+							data-testid="course-subscribe"
+							variant="outline"
+							size="md"
+							class="w-full"
+						>
+							<template #prefix><span class="lucide-layers size-4" /></template>
+							{{ subscriptionLabel }}
+						</Button>
+					</router-link>
+					<p v-if="accessMessage" class="text-sm text-ink-gray-6">
+						{{ accessMessage }}
+					</p>
+				</div>
 				<Button
 					v-if="canGetCertificate"
 					@click="fetchCertificate()"
@@ -171,7 +170,7 @@ const props = withDefaults(
 	defineProps<{
 		course: Resource<CourseDetails | null>
 	}>(),
-	{}
+	{},
 )
 
 function enrollStudent() {
@@ -206,7 +205,7 @@ function enrollStudent() {
 			}, 1000)
 		})
 		.catch((err: { messages?: string[] } | string) => {
-			const msg = typeof err === 'string' ? err : err.messages?.[0] ?? 'Error'
+			const msg = typeof err === 'string' ? err : (err.messages?.[0] ?? 'Error')
 			toast.warning(__(msg))
 			console.error(err)
 		})
@@ -222,9 +221,82 @@ const is_instructor = (): boolean => {
 	return user_is_instructor
 }
 
+const access = computed(() => props.course.data?.access)
+const subscriptionMode = computed(() => Boolean(access.value))
+const entitled = computed(
+	() => !subscriptionMode.value || Boolean(access.value?.allowed),
+)
+const canContinue = computed(() =>
+	Boolean(props.course.data?.membership && entitled.value),
+)
+const canEnroll = computed(() =>
+	Boolean(
+		!props.course.data?.membership &&
+		entitled.value &&
+		(Boolean(user.data) || !subscriptionMode.value) &&
+		(subscriptionMode.value || !props.course.data?.paid_course),
+	),
+)
+const needsLogin = computed(() =>
+	Boolean(subscriptionMode.value && access.value?.reason === 'login_required'),
+)
+const canPurchase = computed(() =>
+	Boolean(
+		props.course.data?.paid_course &&
+		(!subscriptionMode.value || !entitled.value) &&
+		!needsLogin.value,
+	),
+)
+const canSubscribe = computed(() =>
+	Boolean(
+		props.course.data?.required_subscription_tier &&
+		!entitled.value &&
+		!needsLogin.value,
+	),
+)
+const subscriptionLabel = computed(() =>
+	__('Subscribe or upgrade to {0}').format(
+		props.course.data?.required_subscription_tier || '',
+	),
+)
+const accessMessage = computed(() => {
+	if (!subscriptionMode.value || entitled.value || needsLogin.value) return ''
+	const tier = props.course.data?.required_subscription_tier
+	if (!tier) return ''
+	return props.course.data?.paid_course
+		? __('Requires the {0} tier or a direct purchase.').format(tier)
+		: __('Requires the {0} tier.').format(tier)
+})
+const lessonRoute = computed(() => ({
+	name: 'Lesson',
+	params: {
+		courseName: props.course.data?.name,
+		chapterNumber: props.course.data?.current_lesson
+			? props.course.data.current_lesson.split('-')[0]
+			: 1,
+		lessonNumber: props.course.data?.current_lesson
+			? props.course.data.current_lesson.split('-')[1]
+			: 1,
+	},
+}))
+const purchaseRoute = computed(() => ({
+	name: 'Billing',
+	params: { type: 'course', name: props.course.data?.name },
+}))
+const login = () => {
+	window.location.href = `/login?redirect-to=${window.location.pathname}`
+}
+
 const priceLabel = computed<string>(() => {
-	if (props.course.data?.paid_course) return props.course.data?.price || ''
-	return __('Free')
+	const price = props.course.data?.paid_course
+		? props.course.data?.price || ''
+		: ''
+	const tier = subscriptionMode.value
+		? props.course.data?.required_subscription_tier
+		: ''
+	if (tier && price) return __('{0} or included in {1}').format(price, tier)
+	if (tier) return __('Included in {0}').format(tier)
+	return price || __('Free')
 })
 
 const enrolledLabel = computed<string>(() => {
@@ -238,17 +310,18 @@ const enrolledLabel = computed<string>(() => {
 const hasCourseStats = computed<boolean>(() =>
 	Boolean(
 		enrolledLabel.value ||
-			props.course.data?.video_link ||
-			props.course.data?.lessons ||
-			(props.course.data?.quiz_count ?? 0) > 0 ||
-			props.course.data?.enable_certification
-	)
+		props.course.data?.video_link ||
+		props.course.data?.lessons ||
+		(props.course.data?.quiz_count ?? 0) > 0 ||
+		props.course.data?.enable_certification,
+	),
 )
 
 const canGetCertificate = computed<boolean>(() => {
 	return Boolean(
+		canContinue.value &&
 		props.course.data?.enable_certification &&
-			(props.course.data?.membership?.progress ?? 0) >= 100
+		(props.course.data?.membership?.progress ?? 0) >= 100,
 	)
 })
 
@@ -263,7 +336,7 @@ const certificate = createResource({
 		openExternal(
 			`/api/method/frappe.utils.print_format.download_pdf?doctype=LMS+Certificate&name=${
 				data.name
-			}&format=${encodeURIComponent(data.template)}`
+			}&format=${encodeURIComponent(data.template)}`,
 		)
 	},
 }) as Resource<{ name: string; template: string } | null>

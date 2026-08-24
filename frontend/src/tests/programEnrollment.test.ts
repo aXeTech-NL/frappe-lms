@@ -16,7 +16,7 @@ enableAutoUnmount(afterEach)
 // assignmentsCount.test.ts.
 String.prototype.format = function (this: string, ...args: unknown[]): string {
 	return this.replace(/{(\d+)}/g, (match, index) =>
-		args[Number(index)] === undefined ? match : String(args[Number(index)])
+		args[Number(index)] === undefined ? match : String(args[Number(index)]),
 	)
 }
 
@@ -106,6 +106,16 @@ const makeRouter = (): Router =>
 				component: Detail,
 				props: true,
 			},
+			{
+				path: '/billing/:type/:name',
+				name: 'Billing',
+				component: Detail,
+			},
+			{
+				path: '/subscriptions',
+				name: 'Subscriptions',
+				component: Detail,
+			},
 		],
 	})
 
@@ -113,7 +123,7 @@ const student = { name: 'student@example.com', is_student: true }
 
 const mountPage = async (
 	router: Router,
-	user: Record<string, unknown> | null
+	user: Record<string, unknown> | null,
 ) => {
 	const wrapper = mount(defineComponent({ render: () => h(RouterView) }), {
 		global: {
@@ -179,12 +189,12 @@ describe('the program enrollment page', () => {
 		const wrapper = await mountPage(router, student)
 
 		expect(
-			wrapper.find('[data-testid="program-enrollment-summary"]').exists()
+			wrapper.find('[data-testid="program-enrollment-summary"]').exists(),
 		).toBe(true)
 		expect(wrapper.html()).toContain('Intro to Pandas')
 		expect(programResource.fetch).toHaveBeenCalledTimes(1)
 		const programCall = createResourceMock.mock.calls.find(
-			(call) => call[0].url === PROGRAM_URL
+			(call) => call[0].url === PROGRAM_URL,
 		)
 		expect(programCall?.[0].makeParams()).toEqual({
 			program_name: 'data-science',
@@ -199,10 +209,10 @@ describe('the program enrollment page', () => {
 		const wrapper = await mountPage(router, null)
 
 		expect(
-			wrapper.find('[data-testid="program-enrollment-summary"]').exists()
+			wrapper.find('[data-testid="program-enrollment-summary"]').exists(),
 		).toBe(false)
 		expect(
-			wrapper.find('[data-testid="program-enrollment-confirm"]').exists()
+			wrapper.find('[data-testid="program-enrollment-confirm"]').exists(),
 		).toBe(false)
 		expect(wrapper.html()).toContain('log in')
 	})
@@ -214,7 +224,7 @@ describe('the program enrollment page', () => {
 		const wrapper = await mountPage(router, student)
 
 		expect(
-			wrapper.find('[data-testid="program-enrollment-confirm"]').exists()
+			wrapper.find('[data-testid="program-enrollment-confirm"]').exists(),
 		).toBe(false)
 		expect(wrapper.html()).toContain('read-only')
 	})
@@ -231,9 +241,33 @@ describe('the program enrollment page', () => {
 		const wrapper = await mountPage(router, student)
 
 		expect(
-			wrapper.find('[data-testid="program-enrollment-confirm"]').exists()
+			wrapper.find('[data-testid="program-enrollment-confirm"]').exists(),
 		).toBe(false)
 		expect(wrapper.html()).toContain('not authorized')
+	})
+
+	it('offers direct purchase and subscription without calling enrollment when access is missing', async () => {
+		programResource.data = {
+			...programData,
+			paid_program: 1,
+			required_subscription_tier: 'Max',
+			access: {
+				allowed: false,
+				reason: 'purchase_or_subscription_required',
+				can_purchase: true,
+			},
+		}
+		const router = makeRouter()
+		await router.push('/programs/data-science/enroll')
+		const wrapper = await mountPage(router, student)
+
+		expect(wrapper.find('[data-testid="program-purchase"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="program-subscribe"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="program-enrollment-confirm"]').exists(),
+		).toBe(false)
 	})
 
 	it('enrolls in the program named by the URL', async () => {
@@ -246,7 +280,7 @@ describe('the program enrollment page', () => {
 
 		expect(enrollSubmit).toHaveBeenCalledTimes(1)
 		const enrollCall = createResourceMock.mock.calls.find(
-			(call) => call[0].url === ENROLL_URL
+			(call) => call[0].url === ENROLL_URL,
 		)
 		expect(enrollCall?.[0].makeParams()).toEqual({ program: 'data-science' })
 	})
@@ -264,7 +298,7 @@ describe('the program enrollment page', () => {
 		const wrapper = await mountPage(router, student)
 		enrollSubmit.mockImplementation(
 			(_values: unknown, options: { onSuccess: () => void }) =>
-				options.onSuccess()
+				options.onSuccess(),
 		)
 		await wrapper
 			.find('[data-testid="program-enrollment-confirm"]')

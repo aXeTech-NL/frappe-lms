@@ -1,0 +1,231 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "creation": "2026-08-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "member",
+  "plan",
+  "tier",
+  "column_break_status",
+  "status",
+  "cancel_at_period_end",
+  "period_section",
+  "starts_on",
+  "current_period_start",
+  "column_break_period",
+  "current_period_end",
+  "cancelled_on",
+  "billing_snapshot_section",
+  "billing_interval",
+  "interval_count",
+  "column_break_billing_snapshot",
+  "billing_amount",
+  "billing_currency",
+  "gateway_section",
+  "payment_gateway",
+  "gateway_customer_id",
+  "column_break_gateway",
+  "gateway_subscription_id",
+  "latest_payment"
+ ],
+ "fields": [
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Member",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription Plan",
+   "options": "LMS Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription Tier",
+   "options": "LMS Subscription Tier",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nTrial\nActive\nPast Due\nCancelled\nExpired",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "cancel_at_period_end",
+   "fieldtype": "Check",
+   "label": "Cancel at Period End"
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Current Period"
+  },
+  {
+   "fieldname": "starts_on",
+   "fieldtype": "Date",
+   "label": "Starts On"
+  },
+  {
+   "fieldname": "current_period_start",
+   "fieldtype": "Date",
+   "label": "Current Period Start"
+  },
+  {
+   "fieldname": "column_break_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_period_end",
+   "fieldtype": "Date",
+   "label": "Current Period End"
+  },
+  {
+   "fieldname": "cancelled_on",
+   "fieldtype": "Datetime",
+   "label": "Cancelled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "billing_snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Billing Terms"
+  },
+  {
+   "fieldname": "billing_interval",
+   "fieldtype": "Select",
+   "label": "Billing Interval",
+   "options": "Month\nYear",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "interval_count",
+   "fieldtype": "Int",
+   "label": "Interval Count",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_billing_snapshot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "billing_amount",
+   "fieldtype": "Currency",
+   "label": "Billing Amount",
+   "options": "billing_currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "billing_currency",
+   "fieldtype": "Link",
+   "label": "Billing Currency",
+   "options": "Currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "gateway_section",
+   "fieldtype": "Section Break",
+   "label": "Gateway References"
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Data",
+   "label": "Payment Gateway"
+  },
+  {
+   "fieldname": "gateway_customer_id",
+   "fieldtype": "Data",
+   "label": "Gateway Customer ID",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_gateway",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gateway_subscription_id",
+   "fieldtype": "Data",
+   "label": "Gateway Subscription ID",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "latest_payment",
+   "fieldtype": "Link",
+   "label": "Latest Payment",
+   "options": "LMS Payment",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [
+  {
+   "link_doctype": "LMS Payment",
+   "link_fieldname": "subscription"
+  }
+ ],
+ "modified": "2026-08-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS",
+ "name": "LMS Subscription",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Moderator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "member",
+ "track_changes": 1
+}

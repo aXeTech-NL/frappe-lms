@@ -23,12 +23,28 @@ class LMSBatchEnrollment(Document):
 		self.validate_course_enrollment()
 
 	def validate_owner(self):
-		if self.owner == self.member:
+		if self.owner == self.member or self.is_trusted_payment_fulfillment():
 			return
 
 		roles = frappe.get_roles()
 		if "Moderator" not in roles and "Batch Evaluator" not in roles:
 			frappe.throw(_("You must be a Moderator or Batch Evaluator to enroll users in a batch."))
+
+	def is_trusted_payment_fulfillment(self):
+		if not self.flags.get("payment_fulfillment") or not self.payment:
+			return False
+		return bool(
+			frappe.db.exists(
+				"LMS Payment",
+				{
+					"name": self.payment,
+					"member": self.member,
+					"payment_for_document_type": "LMS Batch",
+					"payment_for_document": self.batch,
+					"payment_received": 1,
+				},
+			)
+		)
 
 	def validate_payment(self):
 		paid_batch = frappe.db.get_value("LMS Batch", self.batch, "paid_batch")
@@ -131,8 +147,9 @@ def send_confirmation_email(doc: Document):
 	roles = frappe.get_roles()
 	is_admin = "Moderator" in roles or "Batch Evaluator" in roles
 	is_member = doc.member == frappe.session.user
+	trusted_payment = isinstance(doc, Document) and doc.is_trusted_payment_fulfillment()
 
-	if not is_member and not is_admin:
+	if not is_member and not is_admin and not trusted_payment:
 		frappe.throw(
 			_("You do not have permission to send confirmation emails for this enrollment."),
 			frappe.PermissionError,

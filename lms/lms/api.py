@@ -161,9 +161,18 @@ def get_translations():
 	return get_all_translations(language)
 
 
+BILLING_DOCTYPES = {
+	"course": "LMS Course",
+	"certificate": "LMS Course",
+	"batch": "LMS Batch",
+	"program": "LMS Program",
+	"subscription": "LMS Subscription Plan",
+}
+
+
 @frappe.whitelist()
 def validate_billing_access(billing_type: str, name: str):
-	doctype = "LMS Batch" if billing_type == "batch" else "LMS Course"
+	doctype = BILLING_DOCTYPES.get(billing_type)
 	access, message = verify_billing_access(doctype, name, billing_type)
 
 	address = frappe.db.get_value(
@@ -228,6 +237,7 @@ def get_payment_field_meta():
 			"pan",
 			"payment_id",
 			"order_id",
+			"payment_gateway",
 			"member_consent",
 		],
 	)
@@ -241,7 +251,7 @@ def verify_billing_access(doctype, name, billing_type):
 		access = False
 		message = _("Please login to continue with payment.")
 
-	if access and billing_type not in ["course", "batch", "certificate"]:
+	if access and billing_type not in BILLING_DOCTYPES:
 		access = False
 		message = _("Module is incorrect.")
 
@@ -250,20 +260,52 @@ def verify_billing_access(doctype, name, billing_type):
 		message = _("Module Name is incorrect or does not exist.")
 
 	if access and billing_type == "course":
-		membership = frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": name})
-		if membership:
+		from lms.lms.access import subscriptions_enabled
+
+		course_sale = frappe.db.get_value("LMS Course", name, ["published", "paid_course"], as_dict=True)
+		if not course_sale.published:
 			access = False
-			message = _("You are already enrolled for this course.")
+			message = _("You cannot purchase an unpublished course.")
+		elif not course_sale.paid_course:
+			access = False
+			message = _("This course is not available for direct purchase.")
+		elif subscriptions_enabled():
+			purchased = frappe.db.exists(
+				"LMS Payment",
+				{
+					"member": frappe.session.user,
+					"payment_for_document_type": "LMS Course",
+					"payment_for_document": name,
+					"payment_received": 1,
+				},
+			)
+			if purchased:
+				access = False
+				message = _("You have already purchased this course.")
+		else:
+			membership = frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": name})
+			if membership:
+				access = False
+				message = _("You are already enrolled for this course.")
 
 	elif access and billing_type == "batch":
-		membership = frappe.db.exists("LMS Batch Enrollment", {"member": frappe.session.user, "batch": name})
+		batch_sale = frappe.db.get_value("LMS Batch", name, ["published", "paid_batch"], as_dict=True)
+		if not batch_sale.published:
+			access = False
+			message = _("You cannot purchase an unpublished batch.")
+		elif not batch_sale.paid_batch:
+			access = False
+			message = _("This batch is not available for direct purchase.")
+		membership = access and frappe.db.exists(
+			"LMS Batch Enrollment", {"member": frappe.session.user, "batch": name}
+		)
 		if membership:
 			access = False
 			message = _("You are already enrolled for this batch.")
 
 		seat_count = frappe.get_cached_value("LMS Batch", name, "seat_count")
 		number_of_students = frappe.db.count("LMS Batch Enrollment", {"batch": name})
-		if seat_count <= number_of_students:
+		if seat_count and seat_count <= number_of_students:
 			access = False
 			message = _("Batch is sold out.")
 
@@ -272,8 +314,57 @@ def verify_billing_access(doctype, name, billing_type):
 			access = False
 			message = _("Batch has already started.")
 
+	elif access and billing_type == "program":
+		from lms.lms.access import subscriptions_enabled
+
+		if not subscriptions_enabled():
+			access = False
+			message = _("Subscriptions are not enabled.")
+		elif not frappe.db.get_value("LMS Program", name, "published"):
+			access = False
+			message = _("You cannot purchase an unpublished program.")
+		elif not frappe.db.get_value("LMS Program", name, "paid_program"):
+			access = False
+			message = _("This program is not available for direct purchase.")
+		purchased = access and frappe.db.exists(
+			"LMS Payment",
+			{
+				"member": frappe.session.user,
+				"payment_for_document_type": "LMS Program",
+				"payment_for_document": name,
+				"payment_received": 1,
+			},
+		)
+		if purchased:
+			access = False
+			message = _("You have already purchased this program.")
+
+	elif access and billing_type == "subscription":
+		from lms.lms.access import get_qualifying_subscription, subscriptions_enabled
+
+		if not subscriptions_enabled():
+			access = False
+			message = _("Subscriptions are not enabled.")
+		elif not frappe.db.get_value("LMS Subscription Plan", name, "enabled"):
+			access = False
+			message = _("This subscription plan is not enabled.")
+		else:
+			tier = frappe.db.get_value("LMS Subscription Plan", name, "tier")
+			if tier and get_qualifying_subscription(frappe.session.user, tier):
+				access = False
+				message = _("Your current subscription already includes this tier.")
+
 	elif access and billing_type == "certificate":
-		purchased_certificate = frappe.db.exists(
+		certificate_sale = frappe.db.get_value(
+			"LMS Course", name, ["published", "paid_certificate"], as_dict=True
+		)
+		if not certificate_sale.published:
+			access = False
+			message = _("You cannot purchase a certificate for an unpublished course.")
+		elif not certificate_sale.paid_certificate:
+			access = False
+			message = _("This certificate is not available for direct purchase.")
+		purchased_certificate = access and frappe.db.exists(
 			"LMS Enrollment",
 			{
 				"course": name,
@@ -1740,9 +1831,27 @@ def delete_chapter(chapter: str):
 
 
 def delete_scorm_package(scorm_package_path: str):
-	scorm_package_path = frappe.get_site_path("public", scorm_package_path[1:])
-	if os.path.exists(scorm_package_path):
-		shutil.rmtree(scorm_package_path)
+	"""Delete extracted SCORM content from new private and legacy public storage."""
+	if not isinstance(scorm_package_path, str):
+		frappe.throw(_("Invalid SCORM package path."))
+
+	relative = scorm_package_path.strip("/")
+	parts = relative.split("/")
+	if len(parts) < 3 or parts[0] != "scorm" or any(part in ("", ".", "..") for part in parts):
+		frappe.throw(_("Invalid SCORM package path."))
+
+	for visibility in ("private", "public"):
+		root = os.path.realpath(frappe.get_site_path(visibility, "scorm"))
+		path = os.path.abspath(frappe.get_site_path(visibility, *parts))
+		if not path.startswith(root + os.sep):
+			frappe.throw(_("Invalid SCORM package path."))
+		if os.path.islink(path):
+			os.unlink(path)
+		elif os.path.isdir(path):
+			resolved = os.path.realpath(path)
+			if not resolved.startswith(root + os.sep):
+				frappe.throw(_("Invalid SCORM package path."))
+			shutil.rmtree(path)
 
 
 @frappe.whitelist()
@@ -1905,6 +2014,7 @@ def get_notifications(filters: dict = None):
 def get_lms_settings():
 	allowed_fields = [
 		"allow_guest_access",
+		"enable_subscriptions",
 		"prevent_skipping_videos",
 		"contact_us_email",
 		"contact_us_url",

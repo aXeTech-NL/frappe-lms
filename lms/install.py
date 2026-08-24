@@ -12,6 +12,20 @@ def after_install():
 	give_event_permission()
 	ensure_batch_enrollment_index()
 	ensure_enrollment_unique_constraints()
+	ensure_subscription_indexes()
+
+
+def ensure_subscription_indexes():
+	"""Create subscription lookup indexes on fresh installs; migrate patches existing sites."""
+	if frappe.db.table_exists("LMS Subscription"):
+		frappe.db.add_index("LMS Subscription", ["member", "status", "current_period_end"])
+	if frappe.db.table_exists("LMS Program Course"):
+		frappe.db.add_index("LMS Program Course", ["course", "parent"])
+	if frappe.db.table_exists("LMS Program Member"):
+		frappe.db.add_index("LMS Program Member", ["parent", "member"])
+	if frappe.db.table_exists("LMS Payment"):
+		frappe.db.add_index("LMS Payment", ["subscription", "payment_status"])
+		frappe.db.add_index("LMS Payment", ["subscription", "payment_gateway", "provider_payment_reference"])
 
 
 def ensure_batch_enrollment_index():
@@ -142,7 +156,7 @@ def delete_custom_fields():
 		"linkedin",
 		"profession",
 		"open_to",
-		"cover_image" "work_environment",
+		"cover_imagework_environment",
 		"dream_companies",
 		"career_preference_column",
 		"attire",

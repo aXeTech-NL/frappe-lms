@@ -13,6 +13,7 @@ class LMSCourseProgress(Document):
 		# Guards updates too; before_insert also calls it so member is bound before the
 		# insert-time duplicate check below. The call is idempotent.
 		self.enforce_member_ownership()
+		self.validate_lesson_access()
 
 	def before_insert(self):
 		self.enforce_member_ownership()
@@ -42,6 +43,21 @@ class LMSCourseProgress(Document):
 				frappe.PermissionError,
 			)
 		self.member = frappe.session.user
+
+	def validate_lesson_access(self):
+		from lms.lms.access import subscriptions_enabled
+
+		if not subscriptions_enabled() or PRIVILEGED_ROLES & set(frappe.get_roles()):
+			return
+
+		lesson_course = frappe.db.get_value("Course Lesson", self.lesson, "course")
+		if not lesson_course or (self.course and self.course != lesson_course):
+			frappe.throw(_("The lesson does not belong to this course."), frappe.ValidationError)
+
+		from lms.lms.permissions import can_access_lesson
+
+		if not can_access_lesson(self.lesson, user=self.member):
+			frappe.throw(_("You do not have access to this lesson."), frappe.PermissionError)
 
 	def on_update(self):
 		recalculate_course_progress(self.course, self.member)

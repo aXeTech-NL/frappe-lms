@@ -145,18 +145,28 @@ def get_permission_query_conditions(user=None):
 			select parent from `tabCourse Instructor`
 			where instructor = {escaped} and parenttype = 'LMS Course'
 		)""",
-		f"""`tabCourse Lesson`.course in (
-			select course from `tabLMS Enrollment` where member = {escaped}
-		)""",
 	]
 
-	if user != "Guest" or guest_access_allowed():
+	from lms.lms.access import get_allowed_enrolled_courses, subscriptions_enabled
+
+	if subscriptions_enabled():
+		allowed_courses = get_allowed_enrolled_courses(user)
+		if allowed_courses:
+			escaped_courses = ", ".join(frappe.db.escape(course) for course in allowed_courses)
+			conditions.append(f"`tabCourse Lesson`.course in ({escaped_courses})")
+	else:
 		conditions.append(
-			"""(`tabCourse Lesson`.include_in_preview = 1
-			and `tabCourse Lesson`.course in (
-				select name from `tabLMS Course` where published = 1
-			))"""
+			f"""`tabCourse Lesson`.course in (
+				select course from `tabLMS Enrollment` where member = {escaped}
+			)"""
 		)
+		if user != "Guest" or guest_access_allowed():
+			conditions.append(
+				"""(`tabCourse Lesson`.include_in_preview = 1
+				and `tabCourse Lesson`.course in (
+					select name from `tabLMS Course` where published = 1
+				))"""
+			)
 
 	joined = " or ".join(conditions)
 	return f"({joined})"
@@ -322,6 +332,10 @@ def save_progress(lesson: str, course: str, scorm_details: dict = None):
 
 
 def _save_progress(lesson: str, course: str, scorm_details: dict = None):
+	from lms.lms.permissions import can_access_lesson
+
+	if frappe.db.get_value("Course Lesson", lesson, "course") != course or not can_access_lesson(lesson):
+		return 0
 	membership = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
 	if not membership:
 		return 0

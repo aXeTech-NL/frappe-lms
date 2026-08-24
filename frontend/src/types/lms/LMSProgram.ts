@@ -22,6 +22,16 @@ export interface LMSProgram {
 	published?: 0 | 1
 	/**	Enforce Course Order : Check	*/
 	enforce_course_order?: 0 | 1
+	/**	Paid Program : Check	*/
+	paid_program?: 0 | 1
+	/**	Minimum Subscription Tier : Link - LMS Subscription Tier	*/
+	required_subscription_tier?: string
+	/**	Amount : Currency	*/
+	program_price?: number
+	/**	Currency : Link - Currency	*/
+	currency?: string
+	/**	Amount (USD) : Currency	*/
+	amount_usd?: number
 	/**	Course Count : Int	*/
 	course_count?: number
 	/**	Member Count : Int	*/

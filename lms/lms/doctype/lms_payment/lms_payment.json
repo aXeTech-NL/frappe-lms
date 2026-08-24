@@ -15,8 +15,19 @@
   "payment_for_document_type",
   "payment_for_document",
   "payment_received",
+  "payment_status",
   "payment_for_certificate",
   "member_consent",
+  "subscription",
+  "related_payment",
+  "payment_gateway",
+  "provider_event_id",
+  "provider_event_key",
+  "provider_payment_reference",
+  "paid_on",
+  "failure_reason",
+  "billing_period_start",
+  "billing_period_end",
   "payment_details_section",
   "original_amount",
   "discount_amount",
@@ -140,7 +151,7 @@
    "fieldname": "payment_for_document_type",
    "fieldtype": "Select",
    "label": "Payment for Document Type",
-   "options": "\nLMS Course\nLMS Batch",
+   "options": "\nLMS Course\nLMS Batch\nLMS Program\nLMS Subscription",
    "reqd": 1
   },
   {
@@ -190,6 +201,73 @@
    "fieldname": "member_consent",
    "fieldtype": "Check",
    "label": "Member Consent"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Payment Status",
+   "options": "Pending\nPaid\nFailed\nRefunded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "LMS Subscription",
+   "search_index": 1
+  },
+  {
+   "fieldname": "related_payment",
+   "fieldtype": "Link",
+   "label": "Related Payment",
+   "options": "LMS Payment"
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Data",
+   "label": "Payment Gateway"
+  },
+  {
+   "fieldname": "provider_event_id",
+   "fieldtype": "Data",
+   "label": "Provider Event ID"
+  },
+  {
+   "fieldname": "provider_event_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Provider Event Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "provider_payment_reference",
+   "fieldtype": "Data",
+   "label": "Provider Payment Reference",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Datetime",
+   "label": "Paid On"
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Small Text",
+   "label": "Failure Reason"
+  },
+  {
+   "fieldname": "billing_period_start",
+   "fieldtype": "Date",
+   "label": "Billing Period Start"
+  },
+  {
+   "fieldname": "billing_period_end",
+   "fieldtype": "Date",
+   "label": "Billing Period End"
   }
  ],
  "index_web_pages_for_search": 1,

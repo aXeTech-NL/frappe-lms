@@ -25,6 +25,13 @@ export const useSettings = defineStore('settings', () => {
 		auto: false,
 	})
 
+	function loadSettings(force = false) {
+		if (force) return settings.reload()
+		if (settings.data) return Promise.resolve(settings.data)
+		if (settings.loading) return settings.promise
+		return settings.reload()
+	}
+
 	function loadSidebarSettings(force = false) {
 		if (force) return sidebarSettings.reload()
 		if (sidebarSettings.data) return Promise.resolve(sidebarSettings.data)
@@ -45,6 +52,7 @@ export const useSettings = defineStore('settings', () => {
 		programs,
 		settings,
 		sidebarSettings,
+		loadSettings,
 		loadSidebarSettings,
 	}
 })

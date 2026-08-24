@@ -45,6 +45,8 @@ export interface LMSCourse {
 	currency?: string
 	/**	Paid Course : Check	*/
 	paid_course?: 0 | 1
+	/**	Minimum Subscription Tier : Link - LMS Subscription Tier	*/
+	required_subscription_tier?: string
 	/**	Amount : Currency	*/
 	course_price?: number
 	/**	Amount (USD) : Currency - If you set an amount here, then the USD equivalent setting will not get applied.	*/

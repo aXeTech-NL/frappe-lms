@@ -12,6 +12,13 @@
   "column_break_cwjx",
   "enforce_course_order",
   "column_break_mikl",
+  "pricing_section",
+  "paid_program",
+  "required_subscription_tier",
+  "column_break_pricing",
+  "program_price",
+  "currency",
+  "amount_usd",
   "section_break_vhhu",
   "program_courses",
   "program_members",
@@ -56,6 +63,48 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Enforce Course Order"
+  },
+  {
+   "fieldname": "pricing_section",
+   "fieldtype": "Section Break",
+   "label": "Pricing"
+  },
+  {
+   "default": "0",
+   "fieldname": "paid_program",
+   "fieldtype": "Check",
+   "label": "Paid Program"
+  },
+  {
+   "description": "When subscriptions are enabled, members at this tier or above may enroll. Keep empty for a program that is not included in a subscription.",
+   "fieldname": "required_subscription_tier",
+   "fieldtype": "Link",
+   "label": "Minimum Subscription Tier",
+   "options": "LMS Subscription Tier"
+  },
+  {
+   "fieldname": "column_break_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "program_price",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "mandatory_depends_on": "paid_program",
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "mandatory_depends_on": "paid_program",
+   "options": "Currency"
+  },
+  {
+   "description": "Optional explicit USD price used by LMS multi-currency checkout.",
+   "fieldname": "amount_usd",
+   "fieldtype": "Currency",
+   "label": "Amount (USD)"
   },
   {
    "fieldname": "section_break_vhhu",

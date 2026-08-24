@@ -35,6 +35,24 @@
 					@update:modelValue="setPaidCourse"
 				/>
 
+				<Link
+					v-if="subscriptionsEnabled"
+					v-model="doc.required_subscription_tier"
+					doctype="LMS Subscription Tier"
+					:filters="{ enabled: 1 }"
+					:label="__('Minimum subscription tier')"
+					:placeholder="__('Not included in subscriptions')"
+					variant="outline"
+					@update:modelValue="markDirty()"
+				/>
+				<p v-if="subscriptionsEnabled" class="text-p-sm text-ink-gray-6">
+					{{
+						__(
+							'Direct purchase and subscription access can be offered together.',
+						)
+					}}
+				</p>
+
 				<template v-if="doc?.paid_course">
 					<Link
 						v-model="doc.currency"
@@ -84,7 +102,7 @@
 						:label="__('Paid certificate')"
 						:description="
 							__(
-								'Sell an evaluator-graded certificate alongside this free course.'
+								'Sell an evaluator-graded certificate alongside this free course.',
 							)
 						"
 						@update:modelValue="setPaidCertificate"
@@ -138,7 +156,7 @@
 					<span>
 						{{
 							__(
-								'Certificates render from a Print Format. Build or customize templates from the desk.'
+								'Certificates render from a Print Format. Build or customize templates from the desk.',
 							)
 						}}
 					</span>
@@ -178,7 +196,7 @@
 			<p class="text-p-base text-ink-gray-7">
 				{{
 					__(
-						'Selling a paid course or certificate needs the Payments app. Install it from the Frappe Marketplace, then turn on pricing here.'
+						'Selling a paid course or certificate needs the Payments app. Install it from the Frappe Marketplace, then turn on pricing here.',
 					)
 				}}
 			</p>
@@ -203,10 +221,13 @@ const dayjs = inject('$dayjs') as typeof import('dayjs')
 const settingsStore = useSettings()
 // Only block when we positively know the app is missing; if settings haven't
 // loaded yet, let it through (the backend validation is the hard guard).
+const subscriptionsEnabled = computed<boolean>(() =>
+	Boolean(settingsStore.settings.data?.enable_subscriptions),
+)
 const paymentsAppMissing = computed<boolean>(
 	() =>
 		!!settingsStore.settings.data &&
-		!settingsStore.settings.data.is_payments_app_installed
+		!settingsStore.settings.data.is_payments_app_installed,
 )
 
 const doc = computed(() => resource.doc)
@@ -217,7 +238,7 @@ const showPaymentsAppModal = ref<boolean>(false)
 const publishedOnLabel = computed<string>(() =>
 	doc.value?.published_on
 		? dayjs(doc.value.published_on).format('DD MMM YYYY')
-		: ''
+		: '',
 )
 
 const selfEnrollment = computed<boolean>({
@@ -263,7 +284,7 @@ const timezoneResource = createResource({
 }) as Resource<string[] | null>
 
 const timezoneOptions = computed<{ label: string; value: string }[]>(() =>
-	(timezoneResource.data || []).map((tz) => ({ label: tz, value: tz }))
+	(timezoneResource.data || []).map((tz) => ({ label: tz, value: tz })),
 )
 
 function openEvaluatorModal() {

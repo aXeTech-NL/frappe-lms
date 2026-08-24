@@ -29,6 +29,7 @@ class LMSCourse(Document):
 		self.validate_payments_app()
 		self.validate_certification()
 		self.validate_amount_and_currency()
+		self.validate_subscription_tier()
 		self.image = validate_image(self.image)
 		self.validate_card_gradient()
 
@@ -89,6 +90,12 @@ class LMSCourse(Document):
 
 		if self.paid_certificate and (cint(self.course_price) <= 0 or not self.currency):
 			frappe.throw(_("Amount and currency are required for paid certificates."))
+
+	def validate_subscription_tier(self):
+		if self.required_subscription_tier and not frappe.db.get_value(
+			"LMS Subscription Tier", self.required_subscription_tier, "enabled"
+		):
+			frappe.throw(_("The selected subscription tier is not enabled."))
 
 	def validate_card_gradient(self):
 		if not self.image and not self.card_gradient:

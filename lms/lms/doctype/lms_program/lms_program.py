@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
 from lms.lms.utils import guest_access_allowed
 
@@ -12,6 +13,8 @@ class LMSProgram(Document):
 	def validate(self):
 		self.validate_program_courses()
 		self.validate_program_members()
+		self.validate_pricing()
+		self.validate_subscription_tier()
 		self.update_count()
 
 	def validate_program_courses(self):
@@ -34,6 +37,46 @@ class LMSProgram(Document):
 				)
 			)
 
+	def validate_pricing(self):
+		# Pricing fields are ignored by commerce while subscriptions are disabled,
+		# but must remain editable so an existing Program can still be maintained
+		# without silently clearing its future configuration.
+		if self.paid_program and "payments" not in frappe.get_installed_apps():
+			frappe.throw(_("Please install the Payments App to create a paid program."))
+		if self.paid_program and (flt(self.program_price) <= 0 or not self.currency):
+			frappe.throw(_("Amount and currency are required for paid programs."))
+
+	def validate_subscription_tier(self):
+		from lms.lms.access import subscriptions_enabled
+
+		if not subscriptions_enabled() or not self.required_subscription_tier:
+			return
+
+		program_rank = frappe.db.get_value("LMS Subscription Tier", self.required_subscription_tier, "rank")
+		if not program_rank or not frappe.db.get_value(
+			"LMS Subscription Tier", self.required_subscription_tier, "enabled"
+		):
+			frappe.throw(_("The selected subscription tier is not enabled."))
+
+		course_names = [row.course for row in self.program_courses]
+		if not course_names:
+			return
+		course_tiers = frappe.get_all(
+			"LMS Course",
+			filters={"name": ["in", course_names], "required_subscription_tier": ["is", "set"]},
+			pluck="required_subscription_tier",
+		)
+		if not course_tiers:
+			return
+		max_course_rank = max(
+			frappe.get_all("LMS Subscription Tier", filters={"name": ["in", course_tiers]}, pluck="rank")
+			or [0]
+		)
+		if program_rank < max_course_rank:
+			frappe.throw(
+				_("Program tier must be at least as high as every subscription course in the program.")
+			)
+
 	def update_count(self):
 		course_count = len(self.program_courses)
 		member_count = len(self.program_members)
@@ -43,6 +86,30 @@ class LMSProgram(Document):
 
 		if self.member_count != member_count:
 			self.member_count = member_count
+
+	def on_update(self):
+		from lms.lms.access import subscriptions_enabled
+
+		if subscriptions_enabled():
+			from lms.lms.subscriptions import sync_program_course_enrollments
+
+			sync_program_course_enrollments(program=self.name)
+
+	def on_payment_authorized(self, payment_status):
+		if payment_status in ("Authorized", "Completed"):
+			from lms.lms.utils import update_payment_record
+
+			update_payment_record("LMS Program", self.name)
+
+	def on_trash(self):
+		# Retain course progress while removing the now-invalid Program source link.
+		frappe.db.set_value(
+			"LMS Enrollment",
+			{"enrollment_from_program": self.name},
+			"enrollment_from_program",
+			None,
+			update_modified=False,
+		)
 
 
 def has_permission(doc, ptype="read", user=None):

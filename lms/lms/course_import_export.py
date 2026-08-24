@@ -482,6 +482,7 @@ def get_course_fields():
 		"evaluator",
 		"timezone",
 		"paid_course",
+		"required_subscription_tier",
 		"paid_certificate",
 		"course_price",
 		"currency",

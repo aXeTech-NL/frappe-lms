@@ -48,7 +48,7 @@ const addLink = (
 	links: NavLink[],
 	label: string,
 	icon: string,
-	to = ''
+	to = '',
 ): void => {
 	if (links.some((link) => link.label === label)) return
 	links.push({ label, icon, to })
@@ -58,7 +58,7 @@ const addLink = (
 // reach one. Position 1 keeps it next to Courses.
 const addPrograms = async (
 	viewer: MobileNavViewer,
-	isCurrent: () => boolean
+	isCurrent: () => boolean,
 ): Promise<void> => {
 	if (sidebarLinks.value.some((link) => link.label === 'Programs')) return
 	if (!viewer.isSignedIn) return
@@ -94,22 +94,29 @@ const addSessionLinks = (links: NavLink[], viewer: MobileNavViewer): void => {
  * overtook, left the lists alone and is not something to remember as done.
  */
 export async function loadMobileNavLinks(
-	viewer: MobileNavViewer
+	viewer: MobileNavViewer,
 ): Promise<boolean> {
-	const { sidebarSettings, loadSidebarSettings } = useSettings()
+	const { sidebarSettings, loadSettings, loadSidebarSettings } = useSettings()
 	const run = ++latestRun
 	const isCurrent = (): boolean => run === latestRun
 
 	// Published before the first await so the bar starts populated; filtered and
 	// republished at the end.
 	sidebarLinks.value = (getSidebarLinks(true) as SidebarGroup[]).flatMap(
-		(group) => group.items ?? []
+		(group) => group.items ?? [],
 	)
 
-	await loadSidebarSettings()
+	await Promise.all([loadSettings(), loadSidebarSettings()])
 	if (!isCurrent()) return false
 	const visibility = sidebarSettings.data
 	if (!visibility) return false
+
+	// getSidebarLinks contains conditions from LMS Settings (including the
+	// subscription feature flag). Rebuild after both async settings resources
+	// resolve instead of permanently memoizing the optimistic pre-await list.
+	sidebarLinks.value = (getSidebarLinks(true) as SidebarGroup[]).flatMap(
+		(group) => group.items ?? [],
+	)
 
 	await addPrograms(viewer, isCurrent)
 	if (!isCurrent()) return false
@@ -167,7 +174,9 @@ let loaded: Promise<void> | null = null
  * being true.
  */
 export function ensureMobileNavLinks(viewer: MobileNavViewer): Promise<void> {
-	const key = viewerKey(viewer)
+	const { settings } = useSettings()
+	const subscriptionKey = settings.data?.enable_subscriptions ?? 'pending'
+	const key = `${viewerKey(viewer)}:${subscriptionKey}`
 	if (loaded && loadedFor === key) return loaded
 
 	const forget = (): void => {

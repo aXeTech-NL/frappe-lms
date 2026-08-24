@@ -49,7 +49,10 @@
 						</div>
 					</div>
 
-					<div class="bg-surface-gray-2 rounded-md p-4 space-y-2 my-5">
+					<div
+						v-if="supportsCoupons"
+						class="bg-surface-gray-2 rounded-md p-4 space-y-2 my-5"
+					>
 						<span class="text-ink-gray-5 uppercase text-xs">
 							{{ __('Enter a Coupon Code') }}:
 						</span>
@@ -89,7 +92,7 @@
 					>
 						{{
 							__(
-								'Please ensure that the billing name you enter is correct, as it will be used on your invoice.'
+								'Please ensure that the billing name you enter is correct, as it will be used on your invoice.',
 							)
 						}}
 					</p>
@@ -184,7 +187,7 @@
 							<FormControl
 								:label="
 									__(
-										'I consent to my personal information being stored for invoicing'
+										'I consent to my personal information being stored for invoicing',
 									)
 								"
 								type="checkbox"
@@ -204,6 +207,7 @@
 							variant="solid"
 							size="md"
 							class="ms-auto text-p-base-medium"
+							:disabled="readOnlyMode"
 							@click="generatePaymentLink()"
 						>
 							{{
@@ -217,19 +221,15 @@
 		<div v-else-if="access.data?.message">
 			<NotPermitted
 				:text="access.data.message"
-				:buttonLabel="type == 'course' ? 'Checkout Course' : 'Checkout Batch'"
-				:buttonLink="
-					type == 'course'
-						? getLmsRoute(`courses/${name}`)
-						: getLmsRoute(`batches/${name}`)
-				"
+				:buttonLabel="returnLabel"
+				:buttonLink="returnLink"
 			/>
 		</div>
 		<div v-else-if="!user.data?.name">
 			<NotPermitted
 				text="Please login to access this page."
 				:buttonLink="`/login?redirect-to=${getLmsRoute(
-					`billing/${type}/${name}`
+					`billing/${type}/${name}`,
 				)}`"
 			/>
 		</div>
@@ -258,12 +258,9 @@ import {
 	canonicalIndianState,
 } from '@/utils/indianStates'
 
-const breadcrumbs = [
-	{ label: __('Billing Details'), route: { name: 'Billing' } },
-]
-
 const user = inject('$user')
 const { brand } = sessionStore()
+const readOnlyMode = Boolean(window.read_only_mode)
 const showConsentWarning = ref(false)
 const { capture } = useTelemetry()
 
@@ -284,6 +281,35 @@ const props = defineProps({
 	},
 })
 
+const billingDoctypes = {
+	course: 'LMS Course',
+	certificate: 'LMS Course',
+	batch: 'LMS Batch',
+	program: 'LMS Program',
+	subscription: 'LMS Subscription Plan',
+}
+
+const billingDoctype = computed(
+	() => billingDoctypes[props.type] || 'LMS Course',
+)
+const supportsCoupons = computed(() => props.type !== 'subscription')
+const returnLink = computed(() => {
+	if (props.type === 'program') return getLmsRoute(`programs/${props.name}`)
+	if (props.type === 'subscription') return getLmsRoute('subscriptions')
+	if (props.type === 'batch') return getLmsRoute(`batches/${props.name}`)
+	return getLmsRoute(`courses/${props.name}`)
+})
+const returnLabel = computed(() => {
+	if (props.type === 'program') return __('Back to Program')
+	if (props.type === 'subscription') return __('Back to Subscriptions')
+	if (props.type === 'batch') return __('Back to Batch')
+	return __('Back to Course')
+})
+const breadcrumbs = computed(() => [
+	{ label: returnLabel.value, route: returnLink.value },
+	{ label: __('Billing Details'), route: { name: 'Billing' } },
+])
+
 const access = createResource({
 	url: 'lms.lms.api.validate_billing_access',
 	params: {
@@ -301,10 +327,10 @@ const orderSummary = createResource({
 	url: 'lms.lms.utils.get_order_summary',
 	makeParams(values) {
 		return {
-			doctype: props.type == 'batch' ? 'LMS Batch' : 'LMS Course',
+			doctype: billingDoctype.value,
 			docname: props.name,
 			country: billingDetails.country,
-			coupon: appliedCoupon.value,
+			coupon: supportsCoupons.value ? appliedCoupon.value : null,
 		}
 	},
 	onError(err) {
@@ -348,11 +374,11 @@ const paymentLink = createResource({
 	url: 'lms.lms.payments.get_payment_link',
 	makeParams(values) {
 		let data = {
-			doctype: props.type == 'batch' ? 'LMS Batch' : 'LMS Course',
+			doctype: billingDoctype.value,
 			docname: props.name,
 			address: billingDetails,
 			payment_for_certificate: props.type == 'certificate',
-			coupon_code: appliedCoupon.value,
+			coupon_code: supportsCoupons.value ? appliedCoupon.value : null,
 			country: billingDetails.country,
 		}
 		return data
@@ -360,6 +386,10 @@ const paymentLink = createResource({
 })
 
 const generatePaymentLink = () => {
+	if (readOnlyMode) {
+		toast.error(__('This site is in read-only mode. Payments are unavailable.'))
+		return
+	}
 	paymentLink.submit(
 		{},
 		{
@@ -376,7 +406,9 @@ const generatePaymentLink = () => {
 			onSuccess(data) {
 				if (typeof data !== 'string' || !data) {
 					toast.error(
-						__('Could not start the payment. Please contact the administrator.')
+						__(
+							'Could not start the payment. Please contact the administrator.',
+						),
 					)
 					return
 				}
@@ -386,7 +418,7 @@ const generatePaymentLink = () => {
 			onError(err) {
 				showError(err)
 			},
-		}
+		},
 	)
 }
 

@@ -25,6 +25,7 @@ from frappe.utils import (
 	get_system_timezone,
 	get_time,
 	getdate,
+	now_datetime,
 	nowtime,
 	rounded,
 	to_timedelta,
@@ -1112,6 +1113,7 @@ def get_course_fields():
 		"category",
 		"status",
 		"paid_course",
+		"required_subscription_tier",
 		"paid_certificate",
 		"course_price",
 		"currency",
@@ -1148,6 +1150,10 @@ def get_course_details(course: str):
 
 	course_details.instructors = get_instructors("LMS Course", course_details.name)
 	course_details.membership = membership
+	from lms.lms.access import get_course_access, subscriptions_enabled
+
+	if subscriptions_enabled():
+		course_details.access = get_course_access(course, require_enrollment=False)
 	course_details.rating_count = frappe.db.count("LMS Course Review", {"course": course})
 	course_details.update(get_course_content_stats(course))
 	# course_details.is_instructor = is_instructor(course_details.name)
@@ -1213,10 +1219,22 @@ def get_course_outline(course: str, progress: bool = False) -> list:
 		return []
 
 	lesson_rows = get_outline_lessons([c.name for c in chapters])
-	files_by_name = get_scorm_files(chapters)
-	completed = get_completed_lessons(course, lesson_rows) if progress else set()
+	include_content_fields = True
+	from lms.lms.access import get_course_access, subscriptions_enabled
 
-	return build_outline(chapters, lesson_rows, files_by_name, completed, progress)
+	if subscriptions_enabled():
+		include_content_fields = bool(get_course_access(course).allowed)
+	files_by_name = get_scorm_files(chapters) if include_content_fields else {}
+	completed = get_completed_lessons(course, lesson_rows) if progress and include_content_fields else set()
+
+	return build_outline(
+		chapters,
+		lesson_rows,
+		files_by_name,
+		completed,
+		progress and include_content_fields,
+		include_content_fields,
+	)
 
 
 def get_outline_chapter(course: str) -> list:
@@ -1296,7 +1314,12 @@ def get_completed_lessons(course: str, lesson_rows: list) -> set:
 
 
 def build_outline(
-	chapters: list, lesson_rows: list, files_by_name: dict, completed: set, progress: bool
+	chapters: list,
+	lesson_rows: list,
+	files_by_name: dict,
+	completed: set,
+	progress: bool,
+	include_content_fields: bool = True,
 ) -> list:
 	chapter_idx_by_name = {c.name: c.idx for c in chapters}
 	lessons_by_chapter = {}
@@ -1306,14 +1329,19 @@ def build_outline(
 			title=lr.title,
 			include_in_preview=lr.include_in_preview,
 			icon=get_lesson_icon(lr.body, lr.content),
-			youtube=lr.youtube,
-			quiz_id=lr.quiz_id,
-			question=lr.question,
-			file_type=lr.file_type,
-			course=lr.course,
-			chapter=lr.chapter,
 			number=f"{chapter_idx_by_name[lr.chapter_name]}-{lr.lesson_idx}",
 		)
+		if include_content_fields:
+			lesson.update(
+				{
+					"youtube": lr.youtube,
+					"quiz_id": lr.quiz_id,
+					"question": lr.question,
+					"file_type": lr.file_type,
+					"course": lr.course,
+					"chapter": lr.chapter,
+				}
+			)
 		if progress:
 			lesson.is_complete = lr.name in completed
 		lessons_by_chapter.setdefault(lr.chapter_name, []).append(lesson)
@@ -1324,12 +1352,13 @@ def build_outline(
 			name=c.name,
 			title=c.title,
 			is_scorm_package=c.is_scorm_package,
-			launch_file=c.launch_file,
-			scorm_package=c.scorm_package,
 			idx=c.idx,
 			lessons=lessons_by_chapter.get(c.name, []),
 		)
-		if c.is_scorm_package and c.scorm_package and c.scorm_package in files_by_name:
+		if include_content_fields:
+			chapter.launch_file = c.launch_file
+			chapter.scorm_package = c.scorm_package
+		if include_content_fields and c.is_scorm_package and c.scorm_package in files_by_name:
 			chapter.scorm_package = files_by_name[c.scorm_package]
 		outline.append(chapter)
 	return outline
@@ -2028,9 +2057,17 @@ def can_access_topic(doctype: str, docname: str) -> bool:
 	is_student = False
 	if doctype == "Course Lesson":
 		course = frappe.db.get_value("Course Lesson", docname, "course")
-		is_student = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
-		if not is_student and not can_modify_course(course):
-			return False
+		from lms.lms.access import subscriptions_enabled
+
+		if subscriptions_enabled():
+			from lms.lms.permissions import can_access_lesson
+
+			if not can_access_lesson(docname):
+				return False
+		else:
+			is_student = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
+			if not is_student and not can_modify_course(course):
+				return False
 	elif doctype == "LMS Batch":
 		is_student = frappe.db.exists(
 			"LMS Batch Enrollment", {"batch": docname, "member": frappe.session.user}
@@ -2122,7 +2159,18 @@ def get_discussion_replies(topic: str):
 
 @frappe.whitelist()
 def get_order_summary(doctype: str, docname: str, coupon: str | None = None, country: str | None = None):
-	details = get_paid_course_details(docname) if doctype == "LMS Course" else get_paid_batch_details(docname)
+	getters = {
+		"LMS Course": get_paid_course_details,
+		"LMS Batch": get_paid_batch_details,
+		"LMS Program": get_paid_program_details,
+		"LMS Subscription Plan": get_subscription_plan_details,
+	}
+	getter = getters.get(doctype)
+	if not getter:
+		frappe.throw(_("Unsupported billing document type."))
+	if doctype == "LMS Subscription Plan" and coupon:
+		frappe.throw(_("Coupons are not supported for recurring subscription plans."))
+	details = getter(docname)
 
 	details.amount, details.currency = check_multicurrency(
 		details.amount, details.currency, country, details.amount_usd
@@ -2156,8 +2204,8 @@ def get_paid_course_details(docname: str) -> dict:
 		as_dict=True,
 	)
 
-	if not details.paid_course and not details.paid_certificate:
-		raise frappe.throw(_("This course is free."))
+	if not details or (not details.paid_course and not details.paid_certificate):
+		frappe.throw(_("This course is free."))
 
 	return details
 
@@ -2170,9 +2218,52 @@ def get_paid_batch_details(docname: str) -> dict:
 		as_dict=True,
 	)
 
-	if not details.paid_batch:
-		raise frappe.throw(_("To join this batch, please contact the Administrator."))
+	if not details or not details.paid_batch:
+		frappe.throw(_("To join this batch, please contact the Administrator."))
 
+	return details
+
+
+def get_paid_program_details(docname: str) -> dict:
+	details = frappe.db.get_value(
+		"LMS Program",
+		docname,
+		[
+			"title",
+			"name",
+			"paid_program",
+			"program_price as amount",
+			"currency",
+			"amount_usd",
+		],
+		as_dict=True,
+	)
+	if not details or not details.paid_program:
+		frappe.throw(_("This program is not available for direct purchase."))
+	if not frappe.db.get_value("LMS Program", docname, "published"):
+		frappe.throw(_("You cannot purchase an unpublished program."))
+	return details
+
+
+def get_subscription_plan_details(docname: str) -> dict:
+	details = frappe.db.get_value(
+		"LMS Subscription Plan",
+		docname,
+		[
+			"plan_name as title",
+			"name",
+			"enabled",
+			"amount",
+			"currency",
+			"amount_usd",
+			"tier",
+			"billing_interval",
+			"interval_count",
+		],
+		as_dict=True,
+	)
+	if not details or not details.enabled:
+		frappe.throw(_("This subscription plan is not enabled."))
 	return details
 
 
@@ -2237,11 +2328,12 @@ def validate_coupon_applicability(doctype: str, docname: str, coupon_name: str):
 		"LMS Coupon Item", {"parent": coupon_name, "reference_doctype": doctype, "reference_name": docname}
 	)
 	if not applicable_item:
-		frappe.throw(
-			_("This coupon is not applicable to this {0}.").format(
-				"Course" if doctype == "LMS Course" else "Batch"
-			)
-		)
+		label = {
+			"LMS Course": "Course",
+			"LMS Batch": "Batch",
+			"LMS Program": "Program",
+		}.get(doctype, "item")
+		frappe.throw(_("This coupon is not applicable to this {0}.").format(label))
 
 
 def calculate_discount_amount(base_amount: float, coupon: dict) -> float:
@@ -2307,6 +2399,20 @@ def update_payment_record(doctype: str, docname: str):
 	if not data or not data.get("payment"):
 		return
 
+	payment_reference = frappe.db.get_value(
+		"LMS Payment",
+		data.payment,
+		["payment_for_document_type", "payment_for_document"],
+		as_dict=True,
+	)
+	if not payment_reference:
+		return
+	if (
+		payment_reference.payment_for_document_type != doctype
+		or payment_reference.payment_for_document != docname
+	):
+		frappe.throw(_("The payment callback does not match the referenced document."))
+
 	serialize_callbacks_without_the_constraint()
 
 	if payment_already_recorded(data):
@@ -2326,24 +2432,76 @@ def update_payment_record(doctype: str, docname: str):
 
 
 def get_payment_callback_data(doctype: str, docname: str) -> dict | None:
-	"""The payload of the callback being handled, which is the only thing that
-	says which payment the money arrived for.
+	"""Resolve callback data without guessing another learner's checkout.
 
-	Only some gateways publish it, so fall back to the document's latest request.
-	That fallback picks the wrong payment when a learner has an unpaid checkout
-	open, which is why payment_already_recorded double-checks the gateway's own
-	payment id before anything is credited."""
-	data = frappe.flags.data
+	Provider callbacks should carry the LMS ``payment`` value. For legacy
+	controllers that omit it, match gateway/order values against the request
+	payload. A subscription reference is user-specific; shared Course/Batch/
+	Program references fail closed when more than one unpaid candidate exists.
+	"""
+	callback = frappe._dict(frappe.flags.data or {})
+	if callback.get("payment"):
+		return callback
 
-	if data and data.get("payment"):
-		return frappe._dict(data)
-
-	request = get_integration_requests(doctype, docname)
-
-	if not request:
+	requests = get_integration_requests(doctype, docname)
+	if not requests:
 		return None
 
-	return frappe._dict(json.loads(request[0].data))
+	candidates = []
+	seen_payments = set()
+	for request in requests:
+		try:
+			payload = frappe._dict(json.loads(request.data))
+		except (TypeError, ValueError):
+			continue
+		if not payload.get("payment") or payload.payment in seen_payments:
+			continue
+		seen_payments.add(payload.payment)
+		payment = frappe.db.get_value(
+			"LMS Payment",
+			payload.payment,
+			[
+				"payment_for_document_type",
+				"payment_for_document",
+				"payment_received",
+			],
+			as_dict=True,
+		)
+		if not payment or payment.payment_received:
+			continue
+		if payment.payment_for_document_type != doctype or payment.payment_for_document != docname:
+			continue
+		candidates.append(payload)
+
+	identifier_keys = (
+		"order_id",
+		"razorpay_order_id",
+		"razorpay_payment_id",
+		"stripe_token_id",
+		"payment_id",
+	)
+	callback_values = {str(callback.get(key)) for key in identifier_keys if callback.get(key)}
+	if callback_values:
+		matched = [
+			payload
+			for payload in candidates
+			if callback_values & {str(payload.get(key)) for key in identifier_keys if payload.get(key)}
+		]
+		if len(matched) == 1:
+			matched[0].update(callback)
+			return matched[0]
+
+	if len(candidates) == 1 or (doctype == "LMS Subscription" and candidates):
+		candidates[0].update(callback)
+		return candidates[0]
+
+	if candidates:
+		frappe.log_error(
+			title="Ambiguous LMS payment callback",
+			message=f"Could not safely resolve {len(candidates)} pending payments for {doctype} {docname}.",
+			defer_insert=True,
+		)
+	return None
 
 
 def serialize_callbacks_without_the_constraint():
@@ -2386,7 +2544,12 @@ def payment_already_recorded(data: dict) -> bool:
 	return bool(frappe.db.exists("LMS Payment", {"payment_id": payment_id}))
 
 
-def complete_enrollment(payment_name: str, doctype: str, docname: str):
+def complete_enrollment(payment_name: str, doctype: str | None = None, docname: str | None = None):
+	"""Fulfill the stored payment reference for its stored member.
+
+	Callback sessions are not learner sessions. The LMS Payment row, written
+	before redirecting to the gateway, is the authority for member and target.
+	"""
 	payment_doc = get_payment_doc(payment_name)
 
 	if not payment_doc:
@@ -2397,29 +2560,49 @@ def complete_enrollment(payment_name: str, doctype: str, docname: str):
 		)
 		frappe.throw(_("We could not find your payment record. Please contact the administrator."))
 
+	stored_doctype = payment_doc.payment_for_document_type
+	stored_docname = payment_doc.payment_for_document
+	if doctype and docname and (doctype != stored_doctype or docname != stored_docname):
+		frappe.throw(_("The payment target does not match the fulfillment request."))
+
 	if payment_doc.payment_for_certificate:
-		update_certificate_purchase(docname, payment_name)
-	elif doctype == "LMS Course":
-		enroll_in_course(docname, payment_name)
+		update_certificate_purchase(stored_docname, payment_name, payment_doc.member)
+	elif stored_doctype == "LMS Course":
+		enroll_in_course(stored_docname, payment_name, payment_doc.member)
+	elif stored_doctype == "LMS Batch":
+		enroll_in_batch_for_member(stored_docname, payment_name, payment_doc.member)
+	elif stored_doctype == "LMS Program":
+		enroll_in_program_for_member(
+			stored_docname,
+			payment_doc.member,
+			payment_name=payment_name,
+			access_source="Purchase",
+		)
+	elif stored_doctype == "LMS Subscription":
+		from lms.lms.subscriptions import complete_initial_subscription_payment
+
+		complete_initial_subscription_payment(payment_name)
 	else:
-		enroll_in_batch(docname, payment_name)
+		frappe.throw(_("Unsupported payment fulfillment type {0}.").format(stored_doctype))
 
 	# Counted last: it locks the coupon row until the request commits, and
-	# enrolling is the slower half of this transaction.
+	# fulfillment is the slower half of this transaction.
 	update_coupon_redemption(payment_doc)
 
 
 def get_integration_requests(doctype: str, docname: str):
+	# Payment callbacks commonly run as Guest/Administrator. The exact document
+	# reference is authoritative; filtering by the checkout owner's current
+	# session made valid asynchronous callbacks impossible to resolve.
 	return frappe.get_all(
 		"Integration Request",
 		{
 			"reference_doctype": doctype,
 			"reference_docname": docname,
-			"owner": frappe.session.user,
 		},
 		["data"],
 		order_by="creation desc",
-		limit=1,
+		limit=20,
 	)
 
 
@@ -2427,27 +2610,40 @@ def get_payment_doc(payment_name: str) -> dict:
 	return frappe.db.get_value(
 		"LMS Payment",
 		payment_name,
-		["name", "coupon", "payment_for_certificate", "amount", "amount_with_gst"],
+		[
+			"name",
+			"member",
+			"coupon",
+			"payment_for_certificate",
+			"payment_for_document_type",
+			"payment_for_document",
+			"subscription",
+			"payment_id",
+			"order_id",
+			"payment_gateway",
+			"amount",
+			"amount_with_gst",
+		],
 		as_dict=True,
 	)
 
 
 def update_payment_details(data: dict):
 	payment_id = get_payment_id(data)
-
-	frappe.db.set_value(
-		"LMS Payment",
-		data.payment,
-		{
-			"payment_received": 1,
-			"payment_id": data.get(payment_id),
-			"order_id": data.get("order_id"),
-		},
-	)
+	values = {
+		"payment_received": 1,
+		"payment_status": "Paid",
+		"payment_id": data.get(payment_id),
+		"order_id": data.get("order_id"),
+		"paid_on": now_datetime(),
+	}
+	if data.get("payment_gateway"):
+		values["payment_gateway"] = data.payment_gateway
+	frappe.db.set_value("LMS Payment", data.payment, values)
 
 
 def get_payment_id(data: dict) -> str:
-	payment_gateway = data.get("payment_gateway")
+	payment_gateway = data.get("payment_gateway") or ""
 	if payment_gateway == "Razorpay":
 		payment_id = "razorpay_payment_id"
 	elif "Stripe" in payment_gateway:
@@ -2511,79 +2707,78 @@ def get_payment_total(payment_doc: dict) -> float:
 	return flt(payment_doc.amount_with_gst) or flt(payment_doc.amount)
 
 
-def enroll_in_course(course: str, payment_name: str):
-	# The check below exists so a repeated payment callback is a no-op, and an
-	# unlocked check cannot deliver that: two callbacks arriving together both read
-	# "absent", and the loser then hits the controller's own duplicate error —
-	# failing a request that has already taken the learner's money. Locking the
-	# course row first makes the skip reliable. The controller locks the same row,
-	# so this adds no new lock ordering.
+def enroll_in_course(course: str, payment_name: str, member: str | None = None):
+	# Lock the course so callback retries cannot race duplicate enrollment inserts.
 	frappe.db.get_value("LMS Course", course, "name", for_update=True)
+	payment = frappe.db.get_value("LMS Payment", payment_name, ["name", "member", "source"], as_dict=True)
+	if not payment:
+		frappe.throw(_("Payment record does not exist."))
+	member = member or payment.member
+	if member != payment.member:
+		frappe.throw(_("The payment member does not match the enrollment member."))
 
-	if not frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": course}):
+	if not frappe.db.exists("LMS Enrollment", {"member": member, "course": course}):
 		enrollment = frappe.new_doc("LMS Enrollment")
-		payment = frappe.db.get_value("LMS Payment", payment_name, ["name", "source"], as_dict=True)
-
-		enrollment.update(
-			{
-				"member": frappe.session.user,
-				"course": course,
-				"payment": payment.name,
-			}
-		)
+		enrollment.update({"member": member, "course": course, "payment": payment.name})
+		enrollment.flags.payment_fulfillment = True
 		enrollment.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
 def enroll_in_batch(batch: str, payment_name: str = None):
+	payment_doc = get_payment_details(payment_name)
+	member = (payment_doc and payment_doc.member) or frappe.session.user
+	roles = set(frappe.get_roles())
+	if payment_doc and member != frappe.session.user and not roles & PRIVILEGED_ROLES:
+		frappe.throw(_("You cannot fulfill another member's payment."), frappe.PermissionError)
+	return enroll_in_batch_for_member(batch, payment_name, member)
+
+
+def enroll_in_batch_for_member(batch: str, payment_name: str | None, member: str):
 	if not frappe.db.exists("LMS Batch", batch):
 		frappe.throw(_("The specified batch does not exist."))
-
 	payment_doc = get_payment_details(payment_name)
-	create_enrollment(batch, payment_doc)
+	if payment_doc and member != payment_doc.member:
+		frappe.throw(_("The payment member does not match the batch member."))
+	create_enrollment(batch, member, payment_doc)
 
 
 def get_payment_details(payment_name: str) -> dict:
 	payment_doc = None
 	if payment_name:
 		payment_doc = frappe.db.get_value(
-			"LMS Payment", payment_name, ["name", "source", "payment_received"], as_dict=True
+			"LMS Payment",
+			payment_name,
+			["name", "member", "source", "payment_received"],
+			as_dict=True,
 		)
 	return payment_doc
 
 
-def create_enrollment(batch: str, payment_doc: dict = None):
+def create_enrollment(batch: str, member: str, payment_doc: dict = None):
+	if frappe.db.exists("LMS Batch Enrollment", {"member": member, "batch": batch}):
+		return
 	new_student = frappe.new_doc("LMS Batch Enrollment")
-	new_student.update(
-		{
-			"member": frappe.session.user,
-			"batch": batch,
-		}
-	)
+	new_student.update({"member": member, "batch": batch})
 
 	if payment_doc:
-		new_student.update(
-			{
-				"payment": payment_doc.name,
-				"source": payment_doc.source,
-			}
-		)
-	new_student.save()
+		new_student.update({"payment": payment_doc.name, "source": payment_doc.source})
+		new_student.flags.payment_fulfillment = True
+	new_student.save(ignore_permissions=bool(payment_doc))
 
 
-def update_certificate_purchase(course: str, payment_name: str):
-	# The purchase is recorded on the enrollment, so a learner who bought
-	# certification without enrolling first would otherwise pay for nothing:
-	# set_value with filters updates no rows and reports no error.
-	enroll_in_course(course, payment_name)
+def update_certificate_purchase(course: str, payment_name: str, member: str | None = None):
+	payment_member = frappe.db.get_value("LMS Payment", payment_name, "member")
+	member = member or payment_member
+	if member != payment_member:
+		frappe.throw(_("The payment member does not match the certificate member."))
+	# The purchase is recorded on the enrollment, so ensure its progress row exists.
+	enroll_in_course(course, payment_name, member)
 
 	frappe.db.set_value(
 		"LMS Enrollment",
-		{"member": frappe.session.user, "course": course},
-		{
-			"purchased_certificate": 1,
-			"payment": payment_name,
-		},
+		{"member": member, "course": course},
+		{"purchased_certificate": 1, "payment": payment_name},
 	)
 
 
@@ -2598,7 +2793,18 @@ def get_programs():
 	for program in enrolled_programs:
 		program.update(
 			frappe.db.get_value(
-				"LMS Program", program.name, ["name", "course_count", "member_count"], as_dict=True
+				"LMS Program",
+				program.name,
+				[
+					"name",
+					"course_count",
+					"member_count",
+					"paid_program",
+					"program_price",
+					"currency",
+					"required_subscription_tier",
+				],
+				as_dict=True,
 			)
 		)
 
@@ -2607,7 +2813,15 @@ def get_programs():
 		{
 			"published": 1,
 		},
-		["name", "course_count", "member_count"],
+		[
+			"name",
+			"course_count",
+			"member_count",
+			"paid_program",
+			"program_price",
+			"currency",
+			"required_subscription_tier",
+		],
 	)
 
 	programs_to_remove = []
@@ -2643,6 +2857,11 @@ def get_program_details(program_name: str) -> dict:
 			"course_count",
 			"published",
 			"enforce_course_order",
+			"paid_program",
+			"required_subscription_tier",
+			"program_price",
+			"currency",
+			"amount_usd",
 		],
 		as_dict=1,
 	)
@@ -2650,6 +2869,10 @@ def get_program_details(program_name: str) -> dict:
 		"LMS Program Course", {"parent": program_name}, ["course"], order_by="idx"
 	)
 
+	from lms.lms.access import get_program_access, subscriptions_enabled
+
+	if subscriptions_enabled():
+		program.access = get_program_access(program_name, require_membership=False)
 	program.courses = []
 	previous_progress = 0
 	for i, course in enumerate(program_courses):
@@ -2675,25 +2898,92 @@ def get_program_details(program_name: str) -> dict:
 
 @frappe.whitelist()
 def enroll_in_program(program: str):
-	validate_program_enrollment(program)
+	access = validate_program_enrollment(program)
+	return enroll_in_program_for_member(
+		program,
+		frappe.session.user,
+		payment_name=access.get("payment"),
+		subscription=access.get("subscription"),
+		access_source=access.source,
+	)
 
-	if not frappe.db.exists("LMS Program Member", {"parent": program, "member": frappe.session.user}):
+
+def enroll_in_program_for_member(
+	program: str,
+	member: str,
+	*,
+	payment_name: str | None = None,
+	subscription: str | None = None,
+	access_source: str | None = None,
+):
+	"""Create or strengthen Program membership, then sync its Course rows."""
+	frappe.db.get_value("LMS Program", program, "name", for_update=True)
+	membership = frappe.db.get_value(
+		"LMS Program Member",
+		{"parent": program, "member": member},
+		["name", "access_source", "permanent_access"],
+		as_dict=True,
+	)
+	permanent = int(access_source in ("Purchase", "Legacy", "Manual"))
+	if membership:
+		# A later direct purchase strengthens a subscription-backed membership.
+		if permanent and not membership.permanent_access:
+			frappe.db.set_value(
+				"LMS Program Member",
+				membership.name,
+				{
+					"access_source": access_source,
+					"permanent_access": 1,
+					"payment": payment_name,
+					"subscription": None,
+				},
+				update_modified=False,
+			)
+	else:
 		program_member = frappe.new_doc("LMS Program Member")
 		program_member.update(
 			{
 				"parent": program,
 				"parenttype": "LMS Program",
-				"parentfield": "members",
-				"member": frappe.session.user,
+				"parentfield": "program_members",
+				"member": member,
+				"access_source": access_source,
+				"permanent_access": permanent,
+				"payment": payment_name,
+				"subscription": subscription,
 			}
 		)
+		program_member.flags.ignore_access_protection = True
 		program_member.save(ignore_permissions=True)
+
+	frappe.db.set_value(
+		"LMS Program",
+		program,
+		"member_count",
+		frappe.db.count("LMS Program Member", {"parent": program}),
+		update_modified=False,
+	)
+	from lms.lms.subscriptions import sync_program_course_enrollments
+
+	sync_program_course_enrollments(program=program, member=member)
+	return frappe.db.get_value("LMS Program Member", {"parent": program, "member": member}, "name")
 
 
 def validate_program_enrollment(program: str):
 	published = frappe.db.get_value("LMS Program", program, "published")
 	if not published:
 		frappe.throw(_("You cannot enroll in an unpublished program."))
+
+	from lms.lms.access import get_program_access, subscriptions_enabled
+
+	if not subscriptions_enabled():
+		return frappe._dict(source="Legacy")
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Please login to enroll in this program."), frappe.PermissionError)
+	access = get_program_access(program, require_membership=False)
+	if not access.allowed:
+		frappe.throw(_("You do not have a valid entitlement for this program."))
+	return access
 
 
 @frappe.whitelist(allow_guest=True)  # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
@@ -2918,9 +3208,17 @@ def validate_course_access(lesson: str):
 	if has_course_instructor_role():
 		return
 
+	from lms.lms.access import subscriptions_enabled
+
+	if subscriptions_enabled():
+		from lms.lms.permissions import can_access_lesson
+
+		if not can_access_lesson(lesson):
+			frappe.throw(_("You do not have access to this course."))
+		return
+
 	course = frappe.db.get_value("Course Lesson", lesson, "course")
-	enrollment_exists = frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": course})
-	if not enrollment_exists:
+	if not frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": course}):
 		frappe.throw(_("You do not have access to this course."))
 
 

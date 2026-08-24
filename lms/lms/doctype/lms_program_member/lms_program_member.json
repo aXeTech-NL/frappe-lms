@@ -8,7 +8,11 @@
  "field_order": [
   "member",
   "full_name",
-  "progress"
+  "progress",
+  "access_source",
+  "permanent_access",
+  "payment",
+  "subscription"
  ],
  "fields": [
   {
@@ -33,6 +37,34 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Progress"
+  },
+  {
+   "fieldname": "access_source",
+   "fieldtype": "Select",
+   "label": "Access Source",
+   "options": "\nLegacy\nFree\nPurchase\nSubscription\nManual",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "permanent_access",
+   "fieldtype": "Check",
+   "label": "Permanent Access",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment",
+   "fieldtype": "Link",
+   "label": "Payment",
+   "options": "LMS Payment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "LMS Subscription",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

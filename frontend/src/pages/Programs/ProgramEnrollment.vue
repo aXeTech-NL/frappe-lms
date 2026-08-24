@@ -16,27 +16,34 @@
 					<span>
 						{{
 							__('This program consists of {0} courses').format(
-								program.data.courses.length
+								program.data.courses.length,
 							)
 						}}
 					</span>
 					<span v-if="program.data.enforce_course_order">
 						{{
 							__(
-								' designed as a structured learning path to guide your progress. Courses in this program must be taken in order, and each course will unlock as you complete the previous one. '
+								' designed as a structured learning path to guide your progress. Courses in this program must be taken in order, and each course will unlock as you complete the previous one. ',
 							)
 						}}
 					</span>
 					<span v-else>
 						{{
 							__(
-								' designed as a learning path to guide your progress. You may take the courses in any order that suits you. '
+								' designed as a learning path to guide your progress. You may take the courses in any order that suits you. ',
 							)
 						}}
 					</span>
 					<span>
 						{{ __('Are you sure you want to enroll?') }}
 					</span>
+				</div>
+
+				<div
+					v-if="subscriptionMode && !entitled"
+					class="mt-4 rounded-md bg-surface-amber-2 p-3 text-ink-amber-6"
+				>
+					{{ entitlementMessage }}
 				</div>
 
 				<div class="mt-5">
@@ -85,15 +92,30 @@
 		<template #actions>
 			<div
 				v-if="!refusal && !loadingProgram"
-				class="flex items-center justify-end"
+				class="flex flex-wrap items-center justify-end gap-2"
 			>
 				<HeaderButton
+					v-if="canEnroll"
 					data-testid="program-enrollment-confirm"
-					:label="__('Save')"
+					:label="__('Enroll')"
 					variant="solid"
 					:loading="enrollment.loading"
 					@click="enrollInProgram()"
 				/>
+				<router-link v-if="canPurchase" :to="purchaseRoute">
+					<HeaderButton
+						data-testid="program-purchase"
+						:label="__('Buy program')"
+						variant="solid"
+					/>
+				</router-link>
+				<router-link v-if="canSubscribe" :to="{ name: 'Subscriptions' }">
+					<HeaderButton
+						data-testid="program-subscribe"
+						:label="subscriptionLabel"
+						variant="outline"
+					/>
+				</router-link>
 			</div>
 		</template>
 	</FormShell>
@@ -141,6 +163,42 @@ onMounted(() => {
 })
 
 const loadingProgram = computed(() => !program.data && !program.error)
+const subscriptionMode = computed(() => Boolean(program.data?.access))
+const entitled = computed(() =>
+	subscriptionMode.value ? Boolean(program.data?.access?.allowed) : true,
+)
+const canEnroll = computed(() => entitled.value)
+const canPurchase = computed(() =>
+	Boolean(
+		subscriptionMode.value && !entitled.value && program.data?.paid_program,
+	),
+)
+const canSubscribe = computed(() =>
+	Boolean(
+		subscriptionMode.value &&
+		!entitled.value &&
+		program.data?.required_subscription_tier,
+	),
+)
+const purchaseRoute = computed(() => ({
+	name: 'Billing',
+	params: { type: 'program', name: props.programName },
+}))
+const subscriptionLabel = computed(() =>
+	__('Subscribe or upgrade to {0}').format(
+		program.data?.required_subscription_tier || '',
+	),
+)
+const entitlementMessage = computed(() => {
+	if (canPurchase.value && canSubscribe.value)
+		return __('Buy this program once or subscribe to the {0} tier.').format(
+			program.data.required_subscription_tier,
+		)
+	if (canPurchase.value) return __('Purchase this program to enroll.')
+	return __('A {0} subscription is required.').format(
+		program.data?.required_subscription_tier || '',
+	)
+})
 
 // There was no v-if on the card that opened this — StudentPrograms only ever
 // showed it under the "Published" tab, and that split is made server-side. So
@@ -186,11 +244,11 @@ const enrollInProgram = () => {
 			onError(err: { messages?: string[] } | string) {
 				toast.error(
 					__('Failed to enroll in program: {0}').format(
-						typeof err === 'string' ? err : err.messages?.[0] ?? ''
-					)
+						typeof err === 'string' ? err : (err.messages?.[0] ?? ''),
+					),
 				)
 			},
-		}
+		},
 	)
 }
 </script>

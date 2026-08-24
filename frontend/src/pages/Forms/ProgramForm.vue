@@ -20,6 +20,7 @@
 						:label="__('Title')"
 						type="text"
 						:required="true"
+						@update:modelValue="dirty = true"
 						@change="dirty = true"
 					/>
 					<div class="flex flex-col space-y-3">
@@ -35,6 +36,57 @@
 							type="checkbox"
 							@change="dirty = true"
 						/>
+					</div>
+				</div>
+
+				<div
+					v-if="subscriptionsEnabled"
+					data-testid="program-pricing"
+					class="border-y border-outline-gray-2 py-5 mb-5"
+				>
+					<div class="text-lg-semibold text-ink-gray-9 mb-4">
+						{{ __('Pricing and subscription access') }}
+					</div>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+						<FormControl
+							v-model="program.paid_program"
+							:label="__('Available for direct purchase')"
+							type="checkbox"
+							@change="dirty = true"
+						/>
+						<Link
+							v-model="program.required_subscription_tier"
+							doctype="LMS Subscription Tier"
+							:filters="{ enabled: 1 }"
+							:label="__('Minimum subscription tier')"
+							:placeholder="__('Not included in subscriptions')"
+							@update:modelValue="dirty = true"
+						/>
+						<template v-if="program.paid_program">
+							<Link
+								v-model="program.currency"
+								doctype="Currency"
+								:filters="{ enabled: 1 }"
+								:label="__('Currency')"
+								:required="true"
+								@update:modelValue="dirty = true"
+							/>
+							<FormControl
+								v-model="program.program_price"
+								type="number"
+								min="0"
+								:label="__('Program price')"
+								:required="true"
+								@input="dirty = true"
+							/>
+							<FormControl
+								v-model="program.amount_usd"
+								type="number"
+								min="0"
+								:label="__('Amount (USD)')"
+								@input="dirty = true"
+							/>
+						</template>
 					</div>
 				</div>
 
@@ -221,6 +273,8 @@
 					data-testid="program-save"
 					:label="__('Save')"
 					variant="solid"
+					:disabled="!formReady || saving"
+					:loading="saving"
 					@click="saveProgram()"
 				/>
 			</div>
@@ -256,6 +310,7 @@ import ResponsiveListView from '@/components/ResponsiveListView.vue'
 import Draggable from 'vuedraggable'
 import ProgramProgressSummary from '@/components/Programs/ProgramProgressSummary.vue'
 import { submitResource } from '@/utils/resource'
+import { useSettings } from '@/stores/settings'
 
 const showFormDialog = ref(false)
 const currentForm = ref<'course' | 'member'>('course')
@@ -263,7 +318,15 @@ const course = ref<string>('')
 const member = ref<string>('')
 const showProgressDialog = ref(false)
 const dirty = ref(false)
+const saving = ref(false)
+const documentLoaded = ref(false)
+const coursesLoaded = ref(false)
+const membersLoaded = ref(false)
 const user = inject<any>('$user')
+const settingsStore = useSettings()
+const subscriptionsEnabled = computed(() =>
+	Boolean(settingsStore.settings.data?.enable_subscriptions),
+)
 
 const app = getCurrentInstance()
 const { $dialog } = app!.appContext.config.globalProperties
@@ -274,7 +337,7 @@ const props = withDefaults(
 	}>(),
 	{
 		programName: 'new',
-	}
+	},
 )
 
 // The parent list refetches through its own updatePrograms(), which drives the
@@ -310,6 +373,11 @@ const program = ref<Program>({
 	title: '',
 	published: false,
 	enforce_course_order: false,
+	paid_program: false,
+	required_subscription_tier: '',
+	program_price: 0,
+	currency: '',
+	amount_usd: 0,
 	program_courses: [],
 	program_members: [],
 })
@@ -349,6 +417,7 @@ const programCourses = createListResource({
 	orderBy: 'idx',
 	onSuccess(data: ProgramCourse[]) {
 		program.value.program_courses = data
+		coursesLoaded.value = true
 	},
 })
 
@@ -359,10 +428,12 @@ const programMembers = createListResource({
 	orderBy: 'creation desc',
 	onSuccess(data: ProgramMember[]) {
 		program.value.program_members = data
+		membersLoaded.value = true
 	},
 })
 
 const fetchCourses = () => {
+	coursesLoaded.value = false
 	programCourses.update({
 		filters: {
 			parent: programId.value,
@@ -374,6 +445,7 @@ const fetchCourses = () => {
 }
 
 const fetchMembers = () => {
+	membersLoaded.value = false
 	programMembers.update({
 		filters: {
 			parent: programId.value,
@@ -388,10 +460,19 @@ const fetchMembers = () => {
 // above, whose responses can land either side of this one — copying them out of
 // the document would let whichever arrived first win.
 const applyDoc = (doc: Program) => {
-	program.value.name = doc.name
+	// The text control edits the human title. programId remains the immutable
+	// lookup key used by setValue until Frappe performs any configured rename.
+	program.value.name = doc.title || doc.name
 	program.value.title = doc.title
 	program.value.published = Boolean(doc.published)
 	program.value.enforce_course_order = Boolean(doc.enforce_course_order)
+	program.value.paid_program = Boolean(doc.paid_program)
+	program.value.required_subscription_tier =
+		doc.required_subscription_tier || ''
+	program.value.program_price = doc.program_price || 0
+	program.value.currency = doc.currency || ''
+	program.value.amount_usd = doc.amount_usd || 0
+	documentLoaded.value = true
 	dirty.value = false
 }
 
@@ -402,10 +483,11 @@ watch(
 	programId,
 	() => {
 		if (isNew.value) return
+		documentLoaded.value = false
 		fetchCourses()
 		fetchMembers()
 	},
-	{ immediate: true }
+	{ immediate: true },
 )
 
 watch(
@@ -413,7 +495,13 @@ watch(
 	(doc) => {
 		if (doc) applyDoc(doc)
 	},
-	{ immediate: true }
+	{ immediate: true },
+)
+
+const formReady = computed(() =>
+	isNew.value
+		? true
+		: documentLoaded.value && coursesLoaded.value && membersLoaded.value,
 )
 
 const validateTitle = () => {
@@ -421,11 +509,15 @@ const validateTitle = () => {
 }
 
 const saveProgram = () => {
-	if (!canManageProgram.value) return
+	if (!canManageProgram.value || !formReady.value || saving.value) return
 	validateTitle()
+	// Keep the unsaved marker throughout the request. Only an acknowledged
+	// success clears it; validation/network failures leave local edits visibly
+	// pending.
+	dirty.value = true
+	saving.value = true
 	if (isNew.value) createNewProgram()
 	else updateProgram()
-	dirty.value = false
 }
 
 // Saving navigates onward by REPLACING, so the entry this form was opened on is
@@ -444,13 +536,17 @@ const createNewProgram = () => {
 		},
 		{
 			onSuccess() {
+				saving.value = false
+				dirty.value = false
 				toast.success(__('Program created successfully'))
 				afterSave()
 			},
 			onError(err: any) {
+				saving.value = false
+				dirty.value = true
 				toast.warning(__(err.messages?.[0] || err))
 			},
-		}
+		},
 	)
 }
 
@@ -458,23 +554,25 @@ const updateProgram = () => {
 	submitResource(
 		programs.setValue,
 		{
-			// Spread first: LMS Program is `autoname: field:title`, so
-			// `program.value.name` is the docname AND what the Title input edits.
-			// Spreading it last overwrote the row being addressed with the new
-			// title, so set_value targeted a docname that does not exist yet and
-			// no program could ever be renamed.
 			...program.value,
+			// Address the existing row by its route/docname while persisting the
+			// edited human-facing title explicitly.
 			name: programId.value,
+			title: program.value.name,
 		},
 		{
 			onSuccess() {
+				saving.value = false
+				dirty.value = false
 				toast.success(__('Program updated successfully'))
 				afterSave()
 			},
 			onError(err: any) {
+				saving.value = false
+				dirty.value = true
 				toast.warning(__(err.messages?.[0] || err))
 			},
-		}
+		},
 	)
 }
 
@@ -495,7 +593,7 @@ const addCourse = (close: () => void) => {
 	}
 
 	const existingCourse = program.value.program_courses.find(
-		(c: any) => c.course === course.value
+		(c: any) => c.course === course.value,
 	)
 	if (!existingCourse) {
 		program.value.program_courses.push({
@@ -519,7 +617,7 @@ const addMember = (close: () => void) => {
 	}
 
 	const existingMember = program.value.program_members.find(
-		(m: ProgramMember) => m.member === member.value
+		(m: ProgramMember) => m.member === member.value,
 	)
 	if (!existingMember) {
 		program.value.program_members.push({
@@ -561,7 +659,7 @@ const updateOrder = async (e: any) => {
 					onError(err: any) {
 						toast.warning(__(err.messages?.[0] || err))
 					},
-				}
+				},
 			)
 			await wait(100)
 		}
@@ -573,16 +671,16 @@ const wait = (ms: number) => new Promise((res) => setTimeout(res, ms))
 const remove = (
 	selections: string[],
 	unselectAll: () => void,
-	type: string
+	type: string,
 ) => {
 	const selectionsArray = Array.from(selections)
 	if (type === 'courses') {
 		program.value.program_courses = program.value.program_courses.filter(
-			(c: any) => !selectionsArray.includes(c.name || c.course)
+			(c: any) => !selectionsArray.includes(c.name || c.course),
 		)
 	} else {
 		program.value.program_members = program.value.program_members.filter(
-			(m: any) => !selectionsArray.includes(m.name || m.member)
+			(m: any) => !selectionsArray.includes(m.name || m.member),
 		)
 	}
 	dirty.value = true
@@ -594,7 +692,7 @@ const deleteProgram = () => {
 	$dialog({
 		title: __('Delete Program'),
 		message: __(
-			'Are you sure you want to delete this program? This action cannot be undone.'
+			'Are you sure you want to delete this program? This action cannot be undone.',
 		),
 		actions: [
 			{

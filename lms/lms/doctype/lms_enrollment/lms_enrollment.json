@@ -9,8 +9,12 @@
   "course",
   "progress",
   "payment",
+  "access_source",
+  "permanent_access",
+  "subscription",
   "current_lesson",
   "enrollment_from_batch",
+  "enrollment_from_program",
   "column_break_3",
   "member",
   "member_name",
@@ -106,7 +110,8 @@
    "fieldname": "payment",
    "fieldtype": "Link",
    "label": "Payment",
-   "options": "LMS Payment"
+   "options": "LMS Payment",
+   "read_only": 1
   },
   {
    "fieldname": "certification_section",
@@ -135,7 +140,36 @@
    "fieldname": "enrollment_from_batch",
    "fieldtype": "Link",
    "label": "Enrollment from Batch",
-   "options": "LMS Batch"
+   "options": "LMS Batch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "enrollment_from_program",
+   "fieldtype": "Link",
+   "label": "Enrollment from Program",
+   "options": "LMS Program",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_source",
+   "fieldtype": "Select",
+   "label": "Access Source",
+   "options": "\nLegacy\nFree\nPurchase\nSubscription\nProgram\nBatch\nManual",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "permanent_access",
+   "fieldtype": "Check",
+   "label": "Permanent Access",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "LMS Subscription",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

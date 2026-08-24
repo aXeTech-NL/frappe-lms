@@ -34,7 +34,12 @@ export interface LMSPayment {
 	/**	Member : Link - User	*/
 	member: string
 	/**	Payment for Document Type : Select	*/
-	payment_for_document_type: '' | 'LMS Course' | 'LMS Batch'
+	payment_for_document_type:
+		| ''
+		| 'LMS Course'
+		| 'LMS Batch'
+		| 'LMS Program'
+		| 'LMS Subscription'
 	/**	Payment for Document : Dynamic Link - payment_for_document_type	*/
 	payment_for_document: string
 	/**	Source : Link - LMS Source	*/
@@ -49,4 +54,26 @@ export interface LMSPayment {
 	original_amount?: number
 	/**	Member Consent : Check	*/
 	member_consent?: 0 | 1
+	/**	Payment Status : Select	*/
+	payment_status?: 'Pending' | 'Paid' | 'Failed' | 'Refunded'
+	/**	Subscription : Link - LMS Subscription	*/
+	subscription?: string
+	/**	Related Payment : Link - LMS Payment	*/
+	related_payment?: string
+	/**	Payment Gateway : Data	*/
+	payment_gateway?: string
+	/**	Provider Event ID : Data	*/
+	provider_event_id?: string
+	/**	Provider Event Key : Data	*/
+	provider_event_key?: string
+	/**	Provider Payment Reference : Data	*/
+	provider_payment_reference?: string
+	/**	Paid On : Datetime	*/
+	paid_on?: string
+	/**	Failure Reason : Small Text	*/
+	failure_reason?: string
+	/**	Billing Period Start : Date	*/
+	billing_period_start?: string
+	/**	Billing Period End : Date	*/
+	billing_period_end?: string
 }

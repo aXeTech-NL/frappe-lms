@@ -8,7 +8,7 @@ import { reactive } from 'vue'
 import Billing from '@/pages/Billing.vue'
 
 type BillingAddress = Record<string, unknown>
-type SubmittedCall = { url: string; params: { address: BillingAddress } }
+type SubmittedCall = { url: string; params: ResourceParams }
 
 const { toastMock, submitted, unhandled } = vi.hoisted(() => ({
 	toastMock: { success: vi.fn(), error: vi.fn() },
@@ -47,7 +47,7 @@ const SUMMARY = {
 type ResourceParams = { address: BillingAddress } & Record<string, unknown>
 type ResourceHandlers = {
 	validate?: (
-		params: ResourceParams
+		params: ResourceParams,
 	) => string | undefined | Promise<string | undefined>
 	onSuccess?: (data: unknown) => void
 	onError?: (error: Error) => void
@@ -179,10 +179,13 @@ const address = (over: Record<string, unknown> = {}) => ({
 	...over,
 })
 
-const mountBilling = async (over: Record<string, unknown> = {}) => {
+const mountBilling = async (
+	over: Record<string, unknown> = {},
+	props: { type: string; name: string } = { type: 'batch', name: 'BATCH-01' },
+) => {
 	addressFixture = address(over)
 	const wrapper = mount(Billing, {
-		props: { type: 'batch', name: 'BATCH-01' },
+		props,
 		global: {
 			provide: { $user: { data: { name: 'a@b.c' } } },
 			mocks: { __: (s: string) => s },
@@ -223,6 +226,7 @@ describe('Billing: India state field', () => {
 		submitted.length = 0
 		unhandled.length = 0
 		vi.clearAllMocks()
+		;(window as Window & { read_only_mode?: boolean }).read_only_mode = false
 	})
 
 	it('offers the canonical states as options instead of free text', async () => {
@@ -230,7 +234,7 @@ describe('Billing: India state field', () => {
 		const select = wrapper.find('[data-testid="combobox-State/Province"]')
 		expect(select.exists()).toBe(true)
 		expect(wrapper.find('[data-testid="fc-State/Province"]').exists()).toBe(
-			false
+			false,
 		)
 
 		const options = select.findAll('option').map((o) => o.text())
@@ -245,7 +249,7 @@ describe('Billing: India state field', () => {
 				'Lakshadweep',
 				'Andaman and Nicobar Islands',
 				'Dadra and Nagar Haveli and Daman and Diu',
-			])
+			]),
 		)
 	})
 
@@ -292,10 +296,43 @@ describe('Billing: India state field', () => {
 		await proceed(wrapper)
 
 		expect(wrapper.find('[data-testid="fc-State/Province"]').exists()).toBe(
-			true
+			true,
 		)
 		expect(checkout()).toBeTruthy()
 		expect(checkoutAddress().state).toBe('Bayern')
+	})
+})
+
+describe('Billing: commerce document mapping', () => {
+	beforeEach(() => {
+		submitted.length = 0
+		unhandled.length = 0
+		vi.clearAllMocks()
+		;(window as Window & { read_only_mode?: boolean }).read_only_mode = false
+	})
+
+	it.each([
+		['program', 'PROGRAM-01', 'LMS Program'],
+		['subscription', 'MAX-MONTHLY', 'LMS Subscription Plan'],
+	])('maps %s checkout to %s', async (type, name, doctype) => {
+		const wrapper = await mountBilling({}, { type, name })
+		await consent(wrapper)
+		await proceed(wrapper)
+
+		const summary = submitted.find((entry) => entry.url === SUMMARY_URL)
+		expect(summary?.params.doctype).toBe(doctype)
+		expect(checkout()?.params.doctype).toBe(doctype)
+	})
+
+	it('does not render or submit coupons for subscription plans', async () => {
+		const wrapper = await mountBilling(
+			{},
+			{ type: 'subscription', name: 'MAX' },
+		)
+		expect(wrapper.text()).not.toContain('Enter a Coupon Code')
+		await consent(wrapper)
+		await proceed(wrapper)
+		expect(checkout()?.params.coupon_code).toBeNull()
 	})
 })
 
@@ -304,6 +341,7 @@ describe('Billing: checkout validation errors reach the user', () => {
 		submitted.length = 0
 		unhandled.length = 0
 		vi.clearAllMocks()
+		;(window as Window & { read_only_mode?: boolean }).read_only_mode = false
 	})
 
 	it('toasts readable text for the missing-consent error', async () => {
@@ -315,7 +353,7 @@ describe('Billing: checkout validation errors reach the user', () => {
 		expect(unhandled).toHaveLength(0)
 		// Passing the Error object straight to toast.error renders an empty toast.
 		expect(toastMock.error).toHaveBeenCalledWith(
-			'Please provide your consent to proceed with the payment.'
+			'Please provide your consent to proceed with the payment.',
 		)
 	})
 
@@ -325,7 +363,20 @@ describe('Billing: checkout validation errors reach the user', () => {
 		await proceed(wrapper)
 
 		expect(toastMock.error).toHaveBeenCalledWith(
-			expect.stringContaining('state')
+			expect.stringContaining('state'),
 		)
+	})
+
+	it('does not submit a payment while the site is read-only', async () => {
+		;(window as Window & { read_only_mode?: boolean }).read_only_mode = true
+		const wrapper = await mountBilling()
+		await consent(wrapper)
+		await proceed(wrapper)
+
+		expect(checkout()).toBeFalsy()
+		const button = wrapper
+			.findAll('button')
+			.find((candidate) => candidate.text().includes('Proceed to Payment'))
+		expect(button?.attributes('disabled')).toBeDefined()
 	})
 })

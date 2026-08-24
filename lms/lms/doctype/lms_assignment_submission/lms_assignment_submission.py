@@ -13,10 +13,21 @@ from lms.lms.utils import PRIVILEGED_ROLES, get_lms_route
 class LMSAssignmentSubmission(Document):
 	def validate(self):
 		self.enforce_member_ownership()
+		self.validate_lesson_access()
 		self.enforce_grading_permission()
 		self.validate_duplicates()
 		self.validate_url()
 		self.validate_status()
+
+	def validate_lesson_access(self):
+		from lms.lms.access import subscriptions_enabled
+
+		if not subscriptions_enabled() or PRIVILEGED_ROLES & set(frappe.get_roles()):
+			return
+		from lms.lms.permissions import can_access_assessment
+
+		if not can_access_assessment("LMS Assignment", self.assignment, user=self.member):
+			frappe.throw(_("You do not have access to this assignment."), frappe.PermissionError)
 
 	def enforce_grading_permission(self):
 		"""Only evaluators/instructors may set the grading fields.

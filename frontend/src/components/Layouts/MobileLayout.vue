@@ -94,7 +94,7 @@ const isInstructor = ref(false)
 const isEvaluator = ref(false)
 
 const isSignedIn = computed(
-	() => isLoggedIn.value || Boolean(userResource.data)
+	() => isLoggedIn.value || Boolean(userResource.data),
 )
 
 // Five real routes, no overflow affordance: Home, Courses, Batches, Programs
@@ -106,7 +106,7 @@ const isSignedIn = computed(
 // scaling an ellipsis would eat half the word with no way to read the rest
 // (WCAG 1.4.4). `break-words` only splits a word that cannot fit a line alone.
 const primaryTabs = computed(() =>
-	pickPrimaryTabs(sidebarLinks.value, isSignedIn.value, sidebarSettings.data)
+	pickPrimaryTabs(sidebarLinks.value, isSignedIn.value, sidebarSettings.data),
 )
 
 // The active You tab rings its avatar with `ring-outline-gray-5`, Gameplan's
@@ -150,10 +150,11 @@ watch(
 		}
 		updateSidebarLinks()
 	},
-	{ immediate: true }
+	{ immediate: true },
 )
 
 watch(() => sidebarSettings.data, updateSidebarLinks, { deep: true })
+watch(() => settingsStore.settings?.data, updateSidebarLinks, { deep: true })
 
 // Against the whole matched chain, not just the leaf name: a tab may point at a
 // parent route that redirects to a child, so the leaf never equals the tab's own
@@ -161,7 +162,7 @@ watch(() => sidebarSettings.data, updateSidebarLinks, { deep: true })
 let isActive = (tab) => {
 	if (!tab.activeFor?.length) return false
 	return router.currentRoute.value.matched.some((route) =>
-		tab.activeFor.includes(route.name)
+		tab.activeFor.includes(route.name),
 	)
 }
 
