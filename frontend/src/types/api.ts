@@ -53,6 +53,28 @@ export interface Membership {
 	certificate?: string
 }
 
+export interface EntitlementBadge {
+	label: string
+	theme: 'gray' | 'blue' | 'green' | 'orange' | 'red' | 'violet'
+	icon: 'lock' | 'unlock' | 'layers' | 'credit-card' | 'arrow-up-right' | 'log-in' | 'refresh-cw'
+}
+
+export interface EntitlementOffer {
+	kind: 'purchase' | 'subscribe' | 'upgrade' | 'renew' | 'login' | 'external'
+	label: string
+	url: string
+	variant: 'solid' | 'outline' | 'subtle' | 'ghost'
+	icon?: EntitlementBadge['icon'] | null
+}
+
+export interface EntitlementDecision {
+	handled: boolean
+	allowed: boolean
+	reason?: string
+	badge?: EntitlementBadge | null
+	offers: EntitlementOffer[]
+}
+
 export interface CourseDetails
 	extends Omit<LMSCourse, 'instructors' | 'rating'> {
 	price?: string
@@ -62,6 +84,10 @@ export interface CourseDetails
 	rating?: string
 	rating_count?: number
 	quiz_count?: number
+	entitlement?: EntitlementDecision
+	entitlements?: Partial<
+		Record<'catalog' | 'view' | 'enroll' | 'consume' | 'progress', EntitlementDecision>
+	>
 }
 
 export interface BatchDetails extends Omit<LMSBatch, 'instructors'> {

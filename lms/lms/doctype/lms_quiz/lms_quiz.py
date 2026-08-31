@@ -361,6 +361,16 @@ def check_answer(quiz: str, question: str, question_type: str, answers: str):
 	if not frappe.db.exists("LMS Quiz Question", {"parent": quiz, "question": question}):
 		frappe.throw(_("Question not found in this quiz."), frappe.PermissionError)
 
+	if not is_admin:
+		from lms.lms.permissions import can_access_quiz, quiz_has_managed_entitlement
+
+		# Preserve the upstream/no-provider behavior exactly. The additional live-
+		# answer access restriction exists only when an external provider handles a
+		# course placement; malformed/provider-failure decisions are handled denied
+		# and therefore still fail closed.
+		if quiz_has_managed_entitlement(quiz) and not can_access_quiz(quiz):
+			frappe.throw(_("You are not authorized to access this quiz."), frappe.PermissionError)
+
 	if not is_admin and not frappe.db.get_value("LMS Quiz", quiz, "show_answers"):
 		frappe.throw(
 			_("Live answer checking is not enabled for this quiz."),
@@ -409,3 +419,70 @@ def check_input_answers(question: str, answer: str):
 		if possibility and fuzz.token_sort_ratio(possibility, answer) > 85:
 			return 1
 	return 0
+
+
+def has_permission(doc, ptype="read", user=None):
+	"""Deny managed quiz reads that fail the shared course entitlement gate.
+
+	Unmanaged quizzes deliberately retain their existing DocPerm behavior.
+	"""
+	user = user or frappe.session.user
+	if ptype not in ("read", "select", "print"):
+		roles = set(frappe.get_roles(user))
+		return bool(
+			user == "Administrator"
+			or doc.owner == user
+			or roles & {"System Manager", "Moderator", "Course Creator", "Batch Evaluator"}
+		)
+	from lms.lms.permissions import can_access_quiz, quiz_has_managed_entitlement
+
+	if not quiz_has_managed_entitlement(doc.name, user=user):
+		return True
+	return can_access_quiz(doc.name, user=user)
+
+
+def get_permission_query_conditions(user=None):
+	"""List-read counterpart of managed quiz has_permission.
+
+	The provider cannot be expressed as SQL. Only managed quizzes the caller cannot
+	access are excluded; unmanaged rows retain the legacy list behavior exactly.
+	"""
+	from lms.entitlements import decide_many_batched, has_provider
+	from lms.lms.permissions import (
+		_get_quiz_entitlement_requests,
+		_get_quiz_placements,
+		can_access_quiz,
+		quiz_has_managed_entitlement,
+	)
+
+	if not has_provider():
+		return ""
+	user = user or frappe.session.user
+	if user == "Administrator" or set(frappe.get_roles(user)) & {"System Manager", "Moderator"}:
+		return ""
+	quiz_names = frappe.get_all("LMS Quiz", pluck="name")
+	placements = {name: _get_quiz_placements(name) for name in quiz_names}
+	requests = [
+		request for name in quiz_names for request in _get_quiz_entitlement_requests(name, placements[name])
+	]
+	decisions = decide_many_batched(requests, user=user) if requests else {}
+	denied = [
+		name
+		for name in quiz_names
+		if quiz_has_managed_entitlement(
+			name,
+			user=user,
+			_entitlement_decisions=decisions,
+			_placements=placements[name],
+		)
+		and not can_access_quiz(
+			name,
+			user=user,
+			_entitlement_decisions=decisions,
+			_placements=placements[name],
+		)
+	]
+	if not denied:
+		return ""
+	values = ", ".join(frappe.db.escape(name) for name in denied)
+	return f"`tabLMS Quiz`.name not in ({values})"

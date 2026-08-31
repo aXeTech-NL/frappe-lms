@@ -1,6 +1,17 @@
 <template>
 	<PageHeader :breadcrumbs="breadcrumbs" />
-	<div v-if="isLocked" class="sm:border-e">
+	<div
+		v-if="courseEntitlement?.handled && !courseEntitlement.allowed && !isStaff"
+		class="p-8"
+	>
+		<div class="mx-auto max-w-md rounded-md border p-5 text-center">
+			<div class="mb-4 text-lg-semibold text-ink-gray-8">
+				{{ __('Access to this course is locked') }}
+			</div>
+			<EntitlementActions :decision="courseEntitlement" />
+		</div>
+	</div>
+	<div v-else-if="isLocked" class="sm:border-e">
 		<LockedLessonNotice
 			:redirect="!!currentLessonNumber"
 			@done="goToCurrentLesson()"
@@ -10,9 +21,7 @@
 		v-else-if="
 			readyToRender &&
 			outlineSettled &&
-			(enrollment.data?.length ||
-				user.data?.is_moderator ||
-				user.data?.is_instructor)
+			(enrollment.data?.length || isStaff)
 		"
 	>
 		<iframe
@@ -51,6 +60,7 @@ import { computed, inject, onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import PageHeader from '@/components/Layouts/PageHeader.vue'
 import LockedLessonNotice from '@/components/LockedLessonNotice.vue'
+import EntitlementActions from '@/components/EntitlementActions.vue'
 import { useSidebar } from '@/stores/sidebar'
 import { sessionStore } from '../stores/session'
 import { safeUrl } from '@/utils/safeUrl'
@@ -111,6 +121,34 @@ const leaveForCourse = () => {
 // around the sequential-completion gate. The server refuses the SCORM bytes
 // either way (SCORMRenderer._check_permission), this turns that refusal into the
 // same locked treatment the lesson page shows.
+const entitlementDecision = createResource({
+	url: 'lms.entitlements.get_entitlement_decision',
+	params: {
+		resource_type: 'course',
+		resource_name: props.courseName,
+		action: 'consume',
+	},
+	auto: true,
+})
+const courseEntitlement = computed(() => entitlementDecision.data)
+
+// `is_instructor` in boot data is a global Course Creator role, not proof that
+// this user instructs the course being rendered. Match the server's
+// course-specific instructor/moderator bypass instead.
+const courseDetails = createResource({
+	url: 'lms.lms.utils.get_course_details',
+	params: { course: props.courseName },
+	auto: true,
+})
+const isStaff = computed(() =>
+	Boolean(
+		user.data?.is_moderator ||
+			(courseDetails.data?.instructors || []).some(
+				(instructor) => instructor.name === user.data?.name
+			)
+	)
+)
+
 const outline = createResource({
 	url: 'lms.lms.utils.get_course_outline',
 	cache: ['course_outline_student', props.courseName, 'progress'],

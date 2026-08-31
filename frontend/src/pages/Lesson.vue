@@ -66,8 +66,12 @@
 							)
 						}}
 					</div>
+					<EntitlementActions
+						v-if="lesson.data.entitlement?.handled && !lesson.data.entitlement.allowed"
+						:decision="lesson.data.entitlement"
+					/>
 					<Button
-						v-if="user.data && !lesson.data.disable_self_learning"
+						v-else-if="user.data && !lesson.data.disable_self_learning"
 						@click="enrollStudent()"
 						variant="solid"
 					>
@@ -415,6 +419,7 @@ import Discussions from '@/components/Discussions.vue'
 import CertificationLinks from '@/components/CertificationLinks.vue'
 import CourseOutline from '@/components/CourseOutline.vue'
 import LockedLessonNotice from '@/components/LockedLessonNotice.vue'
+import EntitlementActions from '@/components/EntitlementActions.vue'
 import StudentLessonSidebar from '@/components/StudentLessonSidebar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import PageHeader from '@/components/Layouts/PageHeader.vue'

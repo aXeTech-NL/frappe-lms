@@ -77,6 +77,7 @@ setup_wizard_complete = "lms.demo.demo_data.create_demo_data"
 after_migrate = [
 	"lms.sqlite.build_index_in_background",
 	"lms.lms.doctype.lms_payment.lms_payment.add_unique_payment_id_constraint",
+	"lms.page_renderers.protect_legacy_scorm_packages",
 ]
 
 # Desk Notifications
@@ -94,6 +95,7 @@ permission_query_conditions = {
 	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.get_permission_query_conditions",
 	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.get_permission_query_conditions",
 	"LMS Program": "lms.lms.doctype.lms_program.lms_program.get_permission_query_conditions",
+	"LMS Quiz": "lms.lms.doctype.lms_quiz.lms_quiz.get_permission_query_conditions",
 	"Course Lesson": "lms.lms.doctype.course_lesson.course_lesson.get_permission_query_conditions",
 }
 
@@ -101,6 +103,7 @@ has_permission = {
 	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.has_permission",
 	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.has_permission",
 	"LMS Program": "lms.lms.doctype.lms_program.lms_program.has_permission",
+	"LMS Quiz": "lms.lms.doctype.lms_quiz.lms_quiz.has_permission",
 	"LMS Certificate": "lms.lms.doctype.lms_certificate.lms_certificate.has_permission",
 	"Course Lesson": "lms.lms.doctype.course_lesson.course_lesson.has_permission",
 	"File": "lms.lms.permissions.file_has_permission",
@@ -291,6 +294,14 @@ add_to_apps_screen = [
 sqlite_search = ["lms.sqlite.LearningSearch"]
 auth_hooks = ["lms.auth.authenticate"]
 require_type_annotated_api_methods = True
+
+# === External entitlement provider ===
+# Optional single-provider contract for apps that own commercial/course eligibility.
+# The provider must expose:
+#   decide_many(*, user, requests, contract_version=1) -> decisions keyed by request key
+# See lms.entitlements for the versioned, normalized contract. When absent—or when
+# the provider returns handled=False—LMS preserves its native enrollment/payment rules.
+# lms_entitlement_provider = "my_app.entitlements.decide_many"
 
 # === Raven membership provider ===
 # Hook contract + admin setup: ../raven-membership-provider.md

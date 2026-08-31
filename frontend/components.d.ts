@@ -69,6 +69,8 @@ declare module 'vue' {
     EmailTemplateList: typeof import('./src/components/Settings/EmailTemplate/EmailTemplateList.vue')['default']
     EmailTemplatePage: typeof import('./src/components/Settings/EmailTemplate/EmailTemplatePage.vue')['default']
     EmptyStateLayout: typeof import('./src/components/Layouts/EmptyStateLayout.vue')['default']
+    EntitlementActions: typeof import('./src/components/EntitlementActions.vue')['default']
+    EntitlementBadge: typeof import('./src/components/EntitlementBadge.vue')['default']
     EvaluationModal: typeof import('./src/components/Modals/EvaluationModal.vue')['default']
     Event: typeof import('./src/components/Modals/Event.vue')['default']
     FeedbackModal: typeof import('./src/components/Modals/FeedbackModal.vue')['default']

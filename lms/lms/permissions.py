@@ -48,21 +48,53 @@ def resolve_lesson_access(lesson: str, *, user: str | None = None) -> tuple[bool
 		frappe.session.user = user
 		if can_modify_course(lesson_row.course):
 			return True, True
-		if get_membership(lesson_row.course, user):
-			return False, True
+
+		membership = get_membership(lesson_row.course, user)
+		if membership:
+			entitlement = get_course_entitlement(
+				lesson_row.course,
+				"consume",
+				user=user,
+				context={"lesson": lesson, "is_preview": False},
+			)
+			return False, entitlement.allowed if entitlement.handled else True
+
 		# Preview is for prospective students of a LIVE course. Require the course to be
 		# published so draft lessons don't leak via this gate (matches get_course_details,
-		# which already hides unpublished courses from non-authors). Instructors/members
-		# are handled above, so unpublishing never locks them out.
+		# which already hides unpublished courses from non-authors). A managed resource
+		# can independently allow/deny its preview through the same consume decision.
 		if (
 			lesson_row.include_in_preview
 			and frappe.db.get_value("LMS Course", lesson_row.course, "published")
 			and guest_access_allowed()
 		):
-			return False, True
+			entitlement = get_course_entitlement(
+				lesson_row.course,
+				"consume",
+				user=user,
+				context={"lesson": lesson, "is_preview": True},
+			)
+			return False, entitlement.allowed if entitlement.handled else True
 		return False, False
 	finally:
 		frappe.session.user = original_user
+
+
+def get_course_entitlement(
+	course: str,
+	action: str,
+	*,
+	user: str | None = None,
+	context: dict | None = None,
+):
+	"""Normalized external decision for one course action.
+
+	Kept here as the authorization-side seam so lesson, quiz, progress and reduced
+	lesson payloads share the request-local memoized decision.
+	"""
+	from lms.entitlements import decide
+
+	return decide("course", course, action, user=user, context=context)
 
 
 def can_access_lesson(lesson: str, *, instructor_only: bool = False, user: str | None = None) -> bool:
@@ -77,7 +109,13 @@ def can_access_lesson(lesson: str, *, instructor_only: bool = False, user: str |
 	return is_instructor if instructor_only else can_access
 
 
-def can_access_quiz(quiz: str, *, user: str | None = None) -> bool:
+def can_access_quiz(
+	quiz: str,
+	*,
+	user: str | None = None,
+	_entitlement_decisions: dict | None = None,
+	_placements: dict | None = None,
+) -> bool:
 	"""Single source of truth for who may read a quiz's questions/answers.
 
 	Access is granted to:
@@ -118,27 +156,31 @@ def can_access_quiz(quiz: str, *, user: str | None = None) -> bool:
 		# except the last is course-level, and a quiz embedded in several lessons of one
 		# course would otherwise repeat the membership read and the whole lock chain per
 		# lesson for a set that cannot differ between them.
-		placements = {}
-		if quiz_row.course:
-			placements.setdefault(quiz_row.course, set()).add(quiz_row.lesson)
-		for row in frappe.get_all("Course Lesson", filters={"quiz_id": quiz}, fields=["course", "name"]):
-			if row.course:
-				placements.setdefault(row.course, set()).add(row.name)
+		placements = _placements or _get_quiz_placements(quiz, quiz_row)
+		all_requests = _get_quiz_entitlement_requests(quiz, placements)
+		if _entitlement_decisions is None:
+			from lms.entitlements import decide_many_batched
+
+			_entitlement_decisions = decide_many_batched(all_requests, user=user) if all_requests else {}
 		for course, lessons in placements.items():
 			if can_modify_course(course):
 				return True
 			if not get_membership(course, user):
 				continue
 			locked = get_locked_lessons(course)
-			if not locked:
-				return True
-			# Under the gate a placement with no owning lesson cannot be checked against
-			# the lock set at all: cleanup_lesson_backreferences clears LMS Quiz.lesson
-			# and leaves .course standing, and `None not in locked` is true of every
-			# course, so such a placement used to grant any enrolled member access to a
-			# quiz whose lesson is still locked. It grants nothing now.
-			if any(lesson and lesson not in locked for lesson in lessons):
-				return True
+			# Under the sequential gate, a placement with no owning lesson cannot be
+			# checked against the lock set and grants nothing. Without the gate, the
+			# course-level placement remains valid and carries lesson=None to the provider.
+			eligible_lessons = (
+				list(lessons)
+				if not locked
+				else [lesson for lesson in lessons if lesson and lesson not in locked]
+			)
+			for lesson in eligible_lessons:
+				request = _make_quiz_entitlement_request(quiz, course, lesson)
+				entitlement = _entitlement_decisions[request["key"]]
+				if not entitlement.handled or entitlement.allowed:
+					return True
 
 		assessment_batches = frappe.get_all(
 			"LMS Assessment",
@@ -155,6 +197,59 @@ def can_access_quiz(quiz: str, *, user: str | None = None) -> bool:
 		return False
 	finally:
 		frappe.session.user = original_user
+
+
+def _get_quiz_placements(quiz: str, quiz_row=None) -> dict[str, set]:
+	quiz_row = quiz_row or frappe.db.get_value("LMS Quiz", quiz, ["course", "lesson"], as_dict=True)
+	placements = {}
+	if quiz_row and quiz_row.course:
+		placements.setdefault(quiz_row.course, set()).add(quiz_row.lesson)
+	for row in frappe.get_all("Course Lesson", filters={"quiz_id": quiz}, fields=["course", "name"]):
+		if row.course:
+			placements.setdefault(row.course, set()).add(row.name)
+	return placements
+
+
+def _make_quiz_entitlement_request(quiz: str, course: str, lesson: str | None):
+	from lms.entitlements import make_request
+
+	return make_request(
+		"course",
+		course,
+		"consume",
+		key=f"course:{course}:quiz:{quiz}:{lesson or 'none'}",
+		context={"lesson": lesson, "quiz": quiz, "is_preview": False},
+	)
+
+
+def _get_quiz_entitlement_requests(quiz: str, placements: dict[str, set]) -> list[dict]:
+	return [
+		_make_quiz_entitlement_request(quiz, course, lesson)
+		for course, lessons in sorted(placements.items())
+		for lesson in sorted(lessons, key=lambda value: value or "")
+	]
+
+
+def quiz_has_managed_entitlement(
+	quiz: str,
+	*,
+	user: str | None = None,
+	_entitlement_decisions: dict | None = None,
+	_placements: dict | None = None,
+) -> bool:
+	"""Whether any course placement of ``quiz`` is externally managed."""
+	if not isinstance(quiz, str) or not quiz:
+		return False
+	from lms.entitlements import decide_many_batched, has_provider
+
+	if not has_provider():
+		return False
+	placements = _placements or _get_quiz_placements(quiz)
+	requests = _get_quiz_entitlement_requests(quiz, placements)
+	if not requests:
+		return False
+	decisions = _entitlement_decisions or decide_many_batched(requests, user=user)
+	return any(decisions[request["key"]].handled for request in requests)
 
 
 def enforces_lesson_completion(course: str) -> bool:

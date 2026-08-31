@@ -923,7 +923,7 @@ def get_courses(filters: dict = None, start: int = 0, limit_page_length: int | s
 
 	courses = get_enrollment_details(courses)
 	courses = get_course_card_details(courses)
-	return courses
+	return add_course_entitlements(courses, "catalog")
 
 
 @frappe.whitelist(allow_guest=True)  # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
@@ -1003,6 +1003,32 @@ def get_course_card_details(courses: list) -> list:
 			)
 			course.price = fmt_money(course.amount, 0, course.currency)
 
+	return courses
+
+
+def add_course_entitlements(courses: list, actions: str | tuple[str, ...]) -> list:
+	"""Decorate courses for one or more actions in one provider call.
+
+	Catalog pages ask for one action across many courses. Course detail asks for
+	view/enroll/consume together so its CTA never reuses a presentation decision
+	for a different server authorization boundary.
+	"""
+	if not courses:
+		return courses
+
+	from lms.entitlements import decide_many, make_request
+
+	actions = (actions,) if isinstance(actions, str) else actions
+	requests = [make_request("course", course.name, action) for course in courses for action in actions]
+	decisions = decide_many(requests)
+	for course in courses:
+		course.entitlements = frappe._dict()
+		for action in actions:
+			request = make_request("course", course.name, action)
+			course.entitlements[action] = decisions[request["key"]]
+		# Backwards-compatible presentation field used by CourseCard. Detail views
+		# prefer the action-indexed map.
+		course.entitlement = course.entitlements.get("catalog") or course.entitlements.get("view")
 	return courses
 
 
@@ -1148,6 +1174,7 @@ def get_course_details(course: str):
 
 	course_details.instructors = get_instructors("LMS Course", course_details.name)
 	course_details.membership = membership
+	add_course_entitlements([course_details], ("view", "enroll", "consume"))
 	course_details.rating_count = frappe.db.count("LMS Course Review", {"course": course})
 	course_details.update(get_course_content_stats(course))
 	# course_details.is_instructor = is_instructor(course_details.name)
@@ -1510,25 +1537,6 @@ def get_lesson(course: str, chapter: int, lesson: int) -> dict:
 	if not lesson_details:
 		return _gate_redirect(course)
 
-	# Local import: permissions imports from utils at module load, so importing it
-	# at the top of utils would create a cycle.
-	from lms.lms.permissions import get_lesson_gate
-
-	locked, resume = get_lesson_gate(course)
-	if lesson_name in locked:
-		return {
-			"locked": 1,
-			"title": lesson_details.title,
-			"course_title": frappe.db.get_value("LMS Course", course, "title"),
-			"redirect_to": get_lesson_index(resume) if resume else "1-1",
-		}
-
-	if lesson_details.is_scorm_package:
-		return {
-			"is_scorm_package": True,
-			"chapter_name": chapter_name,
-		}
-
 	membership = get_membership(course)
 	course_info = frappe.db.get_value(
 		"LMS Course",
@@ -1539,17 +1547,49 @@ def get_lesson(course: str, chapter: int, lesson: int) -> dict:
 
 	# Local import: permissions imports from utils at module load, so importing it
 	# at the top of utils would create a cycle.
-	from lms.lms.permissions import resolve_lesson_access
+	from lms.lms.permissions import (
+		get_course_entitlement,
+		get_lesson_gate,
+		resolve_lesson_access,
+	)
 
 	# Resolve instructor status (governs instructor-only field visibility) and overall
-	# access in one pass, so the instructor check isn't computed twice.
+	# access in one pass, so the instructor check isn't computed twice. Do this before
+	# the SCORM shell response: its iframe bytes are protected server-side, and the page
+	# must receive the same lock/offer state rather than rendering a broken iframe.
 	is_instructor, can_access = resolve_lesson_access(lesson_name)
 	if not can_access:
+		response = frappe._dict(
+			no_preview=1,
+			title=lesson_details.title,
+			course_title=course_info.title,
+			disable_self_learning=course_info.disable_self_learning,
+		)
+		entitlement = get_course_entitlement(
+			course,
+			"consume",
+			context={
+				"lesson": lesson_name,
+				"is_preview": bool(lesson_details.include_in_preview and not membership),
+			},
+		)
+		if entitlement.handled:
+			response.entitlement = entitlement
+		return response
+
+	locked, resume = get_lesson_gate(course)
+	if lesson_name in locked:
 		return {
-			"no_preview": 1,
+			"locked": 1,
 			"title": lesson_details.title,
 			"course_title": course_info.title,
-			"disable_self_learning": course_info.disable_self_learning,
+			"redirect_to": get_lesson_index(resume) if resume else "1-1",
+		}
+
+	if lesson_details.is_scorm_package:
+		return {
+			"is_scorm_package": True,
+			"chapter_name": chapter_name,
 		}
 
 	# instructor_content / instructor_notes are instructor-only (permissions.INSTRUCTOR_FIELDS).
@@ -2163,8 +2203,19 @@ def can_access_topic(doctype: str, docname: str) -> bool:
 	is_student = False
 	if doctype == "Course Lesson":
 		course = frappe.db.get_value("Course Lesson", docname, "course")
+		if can_modify_course(course):
+			return True
 		is_student = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
-		if not is_student and not can_modify_course(course):
+		if not is_student:
+			return False
+		from lms.lms.permissions import get_course_entitlement
+
+		entitlement = get_course_entitlement(
+			course,
+			"consume",
+			context={"lesson": docname, "is_preview": False},
+		)
+		if entitlement.handled and not entitlement.allowed:
 			return False
 	elif doctype == "LMS Batch":
 		is_student = frappe.db.exists(
@@ -3053,9 +3104,7 @@ def validate_course_access(lesson: str):
 	if has_course_instructor_role():
 		return
 
-	course = frappe.db.get_value("Course Lesson", lesson, "course")
-	enrollment_exists = frappe.db.exists("LMS Enrollment", {"member": frappe.session.user, "course": course})
-	if not enrollment_exists:
+	if not can_access_topic("Course Lesson", lesson):
 		frappe.throw(_("You do not have access to this course."))
 
 
