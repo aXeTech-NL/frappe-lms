@@ -91,6 +91,7 @@
 				{{ course.title }}
 			</div>
 
+			<CommerceBadge :access="course.commerce" class="w-fit mt-2" />
 			<div class="short-introduction text-sm">
 				{{ course.short_introduction }}
 			</div>
@@ -120,7 +121,10 @@
 				</div>
 
 				<div class="flex items-center gap-x-2">
-					<div v-if="course.paid_course" class="font-semibold">
+					<div v-if="course.commerce?.handled" class="font-semibold text-sm">
+						{{ course.commerce.price_label }}
+					</div>
+					<div v-else-if="course.paid_course" class="font-semibold">
 						{{ course.price }}
 					</div>
 
@@ -143,6 +147,7 @@ import { computed, watch } from 'vue'
 import CourseInstructors from '@/components/CourseInstructors.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import CommerceBadge from '@/commerce/CommerceBadge.vue'
 
 const { user } = sessionStore()
 

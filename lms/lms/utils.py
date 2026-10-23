@@ -1493,6 +1493,8 @@ def get_course_categories() -> list:
 
 
 def get_course_card_details(courses: list) -> list:
+	from lms.lms_commerce.presentation import decorate_courses
+
 	for course in courses:
 		course.instructors = get_public_instructors("LMS Course", course.name)
 
@@ -1502,7 +1504,7 @@ def get_course_card_details(courses: list) -> list:
 			)
 			course.price = fmt_money(course.amount, 0, course.currency)
 
-	return courses
+	return decorate_courses(courses)
 
 
 def get_course_or_filters(filters: dict) -> dict:
@@ -1668,7 +1670,9 @@ def get_course_details(course: str):
 		_locked, resume = get_lesson_gate(course)
 		course_details.current_lesson = get_lesson_index(resume or course_details.membership.current_lesson)
 
-	return course_details
+	from lms.lms_commerce.presentation import decorate_courses
+
+	return decorate_courses([course_details])[0]
 
 
 def get_categorized_courses(courses: list) -> dict:

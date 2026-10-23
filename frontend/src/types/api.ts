@@ -58,6 +58,7 @@ export interface Membership {
 
 export interface CourseDetails
 	extends Omit<LMSCourse, 'instructors' | 'rating'> {
+	commerce?: import('@/commerce/access').CommerceAccess
 	price?: string
 	current_lesson?: string
 	instructors: CourseInstructorInfo[]

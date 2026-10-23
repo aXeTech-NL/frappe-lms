@@ -9,12 +9,14 @@
 				{{ priceLabel }}
 			</div>
 			<div v-if="!readOnlyMode">
+				<CommerceNotice :access="course.data?.commerce" />
 				<div v-if="course.data?.membership" class="space-y-2 mb-8">
 					<ProgressBar :progress="progress" :label="__('Course progress')" />
 					<div v-if="lessonCounts.total" class="text-p-sm text-ink-gray-7">
 						{{ lessonsCompletedLabel }}
 					</div>
 					<Button
+						v-if="!commerceDenied(course.data?.commerce)"
 						variant="solid"
 						size="md"
 						class="w-full"
@@ -41,7 +43,7 @@
 					<CertificationLinks :courseName="course.data.name" class="w-full" />
 				</div>
 				<Button
-					v-else-if="course.data?.paid_course && !isAdmin"
+					v-else-if="!commerceDenied(course.data?.commerce) && course.data?.paid_course && !isAdmin"
 					variant="solid"
 					size="md"
 					class="w-full mb-8 text-p-base-medium"
@@ -61,7 +63,7 @@
 					</span>
 				</Button>
 				<Badge
-					v-else-if="course.data?.disable_self_learning && !isAdmin"
+					v-else-if="!commerceDenied(course.data?.commerce) && course.data?.disable_self_learning && !isAdmin"
 					theme="blue"
 					size="lg"
 					class="mb-4"
@@ -69,7 +71,7 @@
 					{{ __('Contact the Administrator to enroll for this course') }}
 				</Badge>
 				<Button
-					v-else-if="!isAdmin"
+					v-else-if="!commerceDenied(course.data?.commerce) && !isAdmin"
 					@click="enrollStudent()"
 					variant="solid"
 					class="w-full mb-8"
@@ -160,6 +162,8 @@ import VideoPreview from '@/components/VideoPreview.vue'
 import { openExternal } from '@/utils/openExternal'
 import type { CourseDetails, Resource, SessionUser } from '@/types'
 import { isInstructorOf } from '@/utils/instructors'
+import CommerceNotice from '@/commerce/CommerceNotice.vue'
+import { commerceDenied } from '@/commerce/access'
 
 const router = useRouter()
 const user = inject<SessionUser>('$user')!
@@ -214,6 +218,7 @@ const is_instructor = (): boolean =>
 	isInstructorOf(props.course.data?.instructors, user.data?.username)
 
 const priceLabel = computed<string>(() => {
+	if (props.course.data?.commerce?.handled) return props.course.data.commerce.price_label || ''
 	if (props.course.data?.paid_course) return props.course.data?.price || ''
 	return __('Free')
 })

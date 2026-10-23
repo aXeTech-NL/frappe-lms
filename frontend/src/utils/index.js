@@ -465,6 +465,8 @@ export function getUserTimezone() {
 	}
 }
 
+import { commerceLinks } from '@/commerce/navigation'
+
 export function getSidebarLinks(forMobile = false) {
 	let links = getSidebarItems(forMobile)
 
@@ -631,7 +633,7 @@ const getSidebarItems = (forMobile = false) => {
 				},
 			],
 		},
-	]
+	].concat(commerceLinks(settings.data, userResource?.data))
 }
 
 const isAdmin = () => {

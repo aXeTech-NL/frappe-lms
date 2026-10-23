@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "creation": "2026-08-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "default_currency",
+  "portal_path",
+  "integration_section",
+  "contract_version",
+  "provider_path"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "description": "Apply Commerce access rules to linked LMS courses. Unlinked courses keep native LMS access. Does not activate payments or subscriptions; Program/Batch policies are not enforced by this course integration.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "default_currency",
+   "fieldtype": "Link",
+   "label": "Default Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "/lms",
+   "description": "Learning uses the native LMS routes. Configure the LMS base path through the site configuration.",
+   "read_only": 1,
+   "fieldname": "portal_path",
+   "fieldtype": "Data",
+   "label": "Learning Portal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "integration_section",
+   "fieldtype": "Section Break",
+   "label": "LMS Integration"
+  },
+  {
+   "default": "1",
+   "fieldname": "contract_version",
+   "fieldtype": "Int",
+   "label": "Entitlement Contract Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "lms.lms_commerce.integrations.lms.course_access_policy",
+   "fieldname": "provider_path",
+   "fieldtype": "Data",
+   "label": "Course Access Policy Provider",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-24 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS Commerce",
+ "name": "Commerce Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Commerce Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Commerce Viewer"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

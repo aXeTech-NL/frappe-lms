@@ -70,11 +70,14 @@ web_include_js = []
 # ------------
 
 # before_install = "lms.install.before_install"
-after_install = "lms.install.after_install"
-after_sync = "lms.install.after_sync"
+after_install = ["lms.install.after_install", "lms.lms_commerce.install.after_sync"]
+after_sync = ["lms.install.after_sync", "lms.lms_commerce.install.after_sync"]
+before_migrate = "lms.lms_commerce.install.before_migrate"
+lms_course_access_policy = ["lms.lms_commerce.integrations.lms.course_access_policy"]
 before_uninstall = "lms.install.before_uninstall"
 setup_wizard_complete = "lms.demo.demo_data.create_demo_data"
 after_migrate = [
+	"lms.lms_commerce.install.after_sync",
 	"lms.sqlite.build_index_in_background",
 	"lms.lms.doctype.lms_payment.lms_payment.add_unique_payment_id_constraint",
 	"lms.lms.docperm_shadow.warn_about_shadowed_permlevels",
@@ -103,7 +106,10 @@ permission_query_conditions = {
 	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.get_permission_query_conditions",
 	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.get_permission_query_conditions",
 	"LMS Program": "lms.lms.doctype.lms_program.lms_program.get_permission_query_conditions",
-	"Course Lesson": "lms.lms.doctype.course_lesson.course_lesson.get_permission_query_conditions",
+	"Course Lesson": [
+		"lms.lms.doctype.course_lesson.course_lesson.get_permission_query_conditions",
+		"lms.lms_commerce.integrations.queries.lesson_query_conditions",
+	],
 	"LMS Certificate Evaluation": "lms.lms.doctype.lms_certificate_evaluation.lms_certificate_evaluation.get_permission_query_conditions",
 	"LMS Batch Enrollment": "lms.lms.doctype.lms_batch_enrollment.lms_batch_enrollment.get_permission_query_conditions",
 	"LMS Quiz": "lms.lms.permissions.quiz_query_conditions",
@@ -204,7 +210,10 @@ doc_events = {
 	"Course Lesson": {"after_insert": "lms.lms.telemetry.lesson_created"},
 	"LMS Batch": {"on_update": "lms.lms.telemetry.batch_saved"},
 	"LMS Live Class": {"after_insert": "lms.lms.telemetry.live_class_created"},
-	"LMS Enrollment": {"after_insert": "lms.lms.telemetry.enrolled_in_course"},
+	"LMS Enrollment": {
+		"before_insert": "lms.lms_commerce.integrations.enrollment.validate_enrollment",
+		"after_insert": "lms.lms.telemetry.enrolled_in_course",
+	},
 	"LMS Batch Enrollment": {"after_insert": "lms.lms.telemetry.enrolled_in_batch"},
 	"LMS Certificate": {"after_insert": "lms.lms.telemetry.certificate_issued"},
 	"LMS Settings": {"on_update": "lms.lms.telemetry.payment_gateway_saved"},
@@ -270,6 +279,7 @@ website_route_rules = [
 ]
 
 website_redirects = [
+	{"source": "/commerce/courses", "target": f"/{get_lms_path()}/courses", "redirect_http_status": 302},
 	{"source": "/update-profile", "target": "/edit-profile"},
 	{"source": "/courses", "target": f"/{get_lms_path()}/courses"},
 	{

@@ -69,6 +69,26 @@ describe('the learner progress in the course side card', () => {
 		expect(wrapper.text()).not.toContain('Continue Learning')
 	})
 
+	it('blocks commercial enrollment in the native action panel', () => {
+		const wrapper = mountWith({ commerce: { handled: true, allowed: false, offers: [], price_label: 'Included in Max' } }, [])
+		expect(wrapper.text()).toContain('Currently unavailable')
+		expect(wrapper.text()).toContain('Included in Max')
+		expect(wrapper.text()).not.toContain('Enroll Now')
+	})
+
+	it('preserves progress and the native certificate action after access expires', () => {
+		const wrapper = mountWith({ membership: { progress: 100 }, enable_certification: 1, commerce: { handled: true, allowed: false, offers: [] } }, [])
+		expect(wrapper.text()).not.toContain('Continue Learning')
+		expect(wrapper.text()).toContain('Get Certificate')
+		expect(wrapper.find('[style*="width"]').attributes('style')).toContain('100%')
+	})
+
+	it('keeps the native enrollment action for commercially allowed learners', () => {
+		const wrapper = mountWith({ commerce: { handled: true, allowed: true } }, [])
+		expect(wrapper.text()).toContain('Enroll Now')
+		expect(wrapper.text()).not.toContain('Currently unavailable')
+	})
+
 	// Regression: count came from stale stored % x current total (#3014, fixed in #3039).
 	it('counts completed lessons, not the stored percentage', () => {
 		const wrapper = mountWith({ lessons: 15, membership: { progress: 50 } }, [

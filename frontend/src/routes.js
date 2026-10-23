@@ -4,7 +4,10 @@
 // tests able to assert against the REAL route table via `createRouter` with a
 // memory history, rather than a copy that could drift from what router.js
 // actually registers.
+import { commerceRoutes } from './commerce/navigation'
+
 export const routes = [
+	...commerceRoutes,
 	{
 		path: '/',
 		name: 'Home',

@@ -16,6 +16,7 @@ from frappe.utils import add_to_date, now_datetime
 from frappe.utils.response import send_private_file
 from frappe.utils.telemetry import capture
 
+from lms.lms.access_policy import course_access_policy_allows
 from lms.lms.doctype.lms_enrollment.lms_enrollment import (
 	batched_enrollment_updates,
 	update_enrollment,
@@ -30,6 +31,7 @@ from lms.lms.permissions import (
 	unplaceable_assessments,
 )
 from lms.lms.utils import (
+	can_modify_course,
 	get_course_progress,
 	get_editorjs_blocks,
 	guest_access_allowed,
@@ -520,6 +522,15 @@ def _save_progress(lesson: str, course: str, scorm_details: dict = None):
 	membership = frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user})
 	if not membership:
 		return 0
+
+	# save_progress already resolved and validated lesson.chapter.course.
+	if not can_modify_course(course) and not course_access_policy_allows(
+		user=frappe.session.user,
+		course=course,
+		action="progress",
+		context={"lesson": lesson},
+	):
+		frappe.throw(_("You are not authorized to update progress for this course."), frappe.PermissionError)
 
 	# On a sequential course this endpoint writes the gate's own unlock state, so an
 	# enrolled student could otherwise complete every lesson name the outline publishes

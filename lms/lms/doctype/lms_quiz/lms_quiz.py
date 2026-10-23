@@ -29,6 +29,7 @@ with warnings.catch_warnings():
 	warnings.filterwarnings("ignore", message="Using slow pure-python SequenceMatcher")
 	from fuzzywuzzy import fuzz
 
+from lms.lms.access_policy import course_access_policy_allows
 from lms.lms.doctype.course_lesson.course_lesson import get_lesson_course, save_progress
 from lms.lms.doctype.lms_content_author.lms_content_author import AuthoredDocument
 from lms.lms.doctype.lms_question.lms_question import (
@@ -38,6 +39,7 @@ from lms.lms.doctype.lms_question.lms_question import (
 )
 from lms.lms.schedule_utils import assert_within_schedule, validate_schedule_fields
 from lms.lms.utils import (
+	can_modify_course,
 	generate_slug,
 	has_course_instructor_role,
 	has_moderator_role,
@@ -722,6 +724,15 @@ def save_progress_after_quiz(quiz_details: dict, percentage: float):
 
 	course = get_lesson_course(quiz_details.lesson)
 	if not course or quiz_details.lesson in get_locked_lessons(course):
+		return
+	# A separately accessible batch quiz may be submitted without course access.
+	# Do not roll back that submission if its follow-up progress write is denied.
+	if not can_modify_course(course) and not course_access_policy_allows(
+		user=frappe.session.user,
+		course=course,
+		action="progress",
+		context={"lesson": quiz_details.lesson},
+	):
 		return
 
 	save_progress(quiz_details.lesson, course)

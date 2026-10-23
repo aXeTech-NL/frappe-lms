@@ -16,6 +16,7 @@ from pypika import Case
 from pypika import functions as fn
 from pypika.terms import LiteralValue
 
+from lms.lms.access_policy import course_access_policy_allows
 from lms.lms.utils import (
 	can_modify_batch,
 	can_modify_course,
@@ -483,7 +484,12 @@ def resolve_lesson_access(lesson: str, *, user: str | None = None) -> tuple[bool
 		if can_modify_course(lesson_row.course):
 			return True, True
 		if get_membership(lesson_row.course, user):
-			return False, True
+			return False, course_access_policy_allows(
+				user=user,
+				course=resolve_lesson_course(lesson),
+				action="consume",
+				context={"lesson": lesson},
+			)
 		# Preview is for prospective students of a LIVE course. Require the course to be
 		# published so draft lessons don't leak via this gate (matches get_course_details,
 		# which already hides unpublished courses from non-authors). Instructors/members
@@ -493,7 +499,12 @@ def resolve_lesson_access(lesson: str, *, user: str | None = None) -> tuple[bool
 			and frappe.db.get_value("LMS Course", lesson_row.course, "published")
 			and guest_access_allowed()
 		):
-			return False, True
+			return False, course_access_policy_allows(
+				user=user,
+				course=resolve_lesson_course(lesson),
+				action="consume",
+				context={"lesson": lesson, "is_preview": True},
+			)
 		return False, False
 	finally:
 		frappe.session.user = original_user
@@ -962,6 +973,7 @@ def _reaches_through_a_course(doctype: str, name: str, user: str, *, include_mem
 	enrolled = _enrolled_in(set(placements), user)
 	return any(
 		_member_reaches_a_placement(course, lessons)
+		and course_access_policy_allows(user=user, course=course, action="consume")
 		for course, lessons in placements.items()
 		if course in enrolled
 	)
@@ -1428,13 +1440,22 @@ def _course_conditions(doctype: str, assessment, user: str, *, include_members: 
 
 
 def _enrolled_courses(user: str):
-	"""The courses `user` is enrolled in, as a subquery."""
+	"""Native enrollment narrowed by course policy, also for assessment list reads."""
 	enrollment = frappe.qb.DocType("LMS Enrollment")
-	return (
+	query = (
 		frappe.qb.from_(enrollment)
 		.select(enrollment.course)
 		.where(enrollment.member == LiteralValue(frappe.db.escape(user)))
 	)
+	# A has_permission hook alone does not protect get_list/REST list payloads.
+	# Keep authored and independent batch channels unchanged; narrow only the
+	# course-member grant. Policy decisions are request-local and course-wide.
+	denied = [
+		course
+		for course in query.run(pluck=True)
+		if not course_access_policy_allows(user=user, course=course, action="consume")
+	]
+	return query.where(enrollment.course.notin(denied)) if denied else query
 
 
 def _placed_in_a_lesson(doctype: str, assessment, courses, *, student_visible_only: bool):

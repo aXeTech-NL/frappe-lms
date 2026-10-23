@@ -2448,6 +2448,9 @@ def get_lms_settings():
 		settings[field] = frappe.get_cached_value("LMS Settings", None, field)
 
 	settings["is_payments_app_installed"] = "payments" in frappe.get_installed_apps()
+	from lms.lms_commerce.presentation import settings_flags
+
+	settings.update(settings_flags())
 
 	return settings
 
@@ -2930,13 +2933,23 @@ def track_video_watch_duration(lesson: str, videos: list):
 	"""
 	Track the watch duration of videos in a lesson.
 	"""
-	from lms.lms.permissions import can_access_lesson
+	from lms.lms.access_policy import course_access_policy_allows
+	from lms.lms.permissions import resolve_lesson_access, resolve_lesson_course
 
 	if not isinstance(lesson, str):
 		frappe.throw(_("Lesson must be a string."))
 
-	if not can_access_lesson(lesson):
+	is_instructor, can_access = resolve_lesson_access(lesson)
+	if not can_access:
 		frappe.throw(_("You do not have access to this lesson."), frappe.PermissionError)
+
+	if not is_instructor and not course_access_policy_allows(
+		user=frappe.session.user,
+		course=resolve_lesson_course(lesson),
+		action="progress",
+		context={"lesson": lesson},
+	):
+		frappe.throw(_("You are not authorized to update progress for this course."), frappe.PermissionError)
 
 	if not isinstance(videos, list):
 		videos = json.loads(videos)
