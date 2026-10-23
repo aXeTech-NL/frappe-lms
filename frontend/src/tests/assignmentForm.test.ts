@@ -8,8 +8,6 @@ import {
 } from 'vue-router'
 import { defineComponent, h, reactive } from 'vue'
 
-vi.stubGlobal('__', (text: string) => text)
-
 enableAutoUnmount(afterEach)
 
 // vi.hoisted because vi.mock's factory is hoisted above every top-level const.
@@ -23,7 +21,6 @@ const {
 	insertOptions,
 	insertSubmit,
 	setValueSubmit,
-	passthrough,
 } = vi.hoisted(() => {
 	// @/utils pulls in plyr, which touches matchMedia at import time.
 	window.matchMedia ??= (() => ({
@@ -53,13 +50,6 @@ const {
 			insertOptions.current = options
 			return { loading: false, data: null, submit: insertSubmit }
 		}),
-		// Renders its label, as the real Combobox/Select/MultiSelect do: a stub
-		// that drops it makes "every field is labelled" pass by omission.
-		passthrough: {
-			inheritAttrs: false,
-			props: ['label'],
-			template: `<div><label v-if="label">{{ label }}</label><slot name="icon" /><slot /></div>`,
-		},
 	}
 })
 
@@ -77,13 +67,10 @@ vi.mock('@/components/HeaderButton.vue', () => ({
 vi.mock('@/stores/settings', () => ({ useSettings: () => ({}) }))
 vi.mock('@/stores/user', () => ({ usersStore: () => ({ userResource: {} }) }))
 
-// frappe-ui's ESM build does not resolve under vitest, so every export the
-// form, FormShell and the Controls wrappers use is stubbed by hand.
+// Only the exports the form and FormShell use; the real barrel never loads.
 vi.mock('frappe-ui', () => ({
 	createDocumentResource: createDocumentResourceMock,
 	createResource: createResourceMock,
-	createListResource: vi.fn(() => ({ data: [], insert: { submit: vi.fn() } })),
-	call: vi.fn(),
 	toast: { success: vi.fn(), error: vi.fn() },
 	Dialog: {
 		name: 'Dialog',
@@ -91,26 +78,26 @@ vi.mock('frappe-ui', () => ({
 		emits: ['update:open'],
 		template: `<div v-if="open" role="dialog"><h2>{{ title }}</h2><slot /><slot name="actions" /></div>`,
 	},
-	Button: {
-		inheritAttrs: false,
-		template: `<button v-bind="$attrs"><slot name="icon" /><slot /></button>`,
-	},
 	FormControl: {
 		props: ['modelValue', 'label', 'type', 'required', 'options'],
 		emits: ['update:modelValue'],
 		template: `<label>{{ label }}<input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" /></label>`,
 	},
-	FormLabel: {
-		props: ['label', 'required', 'id'],
-		template: `<label :for="id">{{ label }}</label>`,
-	},
-	Combobox: passthrough,
-	MultiSelect: passthrough,
-	Select: passthrough,
 }))
 
+// A textarea that emits `change` fills the question the way the editor does.
 vi.mock('@/components/RichTextEditor.vue', () => ({
-	default: defineComponent({ render: () => h('div') }),
+	default: defineComponent({
+		emits: ['change'],
+		setup:
+			(_props, { emit }) =>
+			() =>
+				h('textarea', {
+					'data-testid': 'rich-text',
+					onInput: (e: Event) =>
+						emit('change', (e.target as HTMLTextAreaElement).value),
+				}),
+	}),
 }))
 vi.mock('@/components/Controls/Link.vue', () => ({
 	default: {
@@ -118,7 +105,20 @@ vi.mock('@/components/Controls/Link.vue', () => ({
 		template: `<label>{{ label }}<input data-testid="assignment-course" :value="modelValue" /></label>`,
 	},
 }))
+vi.mock('@/components/Controls/BooleanSwitch.vue', () => ({
+	default: { props: ['modelValue', 'label'], template: `<div />` },
+}))
+// The server's write answer for the assignment, read at mount.
+const authorship = vi.hoisted(() => ({ canWrite: true as boolean | null }))
+vi.mock('@/composables/useCanWrite', async () => {
+	const { ref } = await import('vue')
+	return {
+		useCanWrite: (_doctype: string, name: () => string | undefined) =>
+			ref(name() ? authorship.canWrite : true),
+	}
+})
 
+import { toast } from 'frappe-ui'
 import AssignmentForm from '@/pages/Forms/AssignmentForm.vue'
 
 // The list page hosts the form as a child route, so the stub has to render a
@@ -185,13 +185,25 @@ const RECORD = {
 	type: 'Text',
 	question: '<p>Why?</p>',
 	course: 'COURSE-1',
+	enable_scheduling: 0,
+	schedule_start: null,
+	schedule_end: null,
 }
 
 const inputs = (wrapper: any) =>
 	wrapper.find('[data-testid="assignment-fields"]').findAll('input')
 
+// Title, Submission Type and Question: every field LMS Assignment requires.
+const fillRequired = async (wrapper: any): Promise<void> => {
+	const [title, type] = inputs(wrapper)
+	await title.setValue('Write an essay')
+	await type.setValue('Text')
+	await wrapper.get('[data-testid="rich-text"]').setValue('<p>Why?</p>')
+}
+
 describe('AssignmentForm as a route', () => {
 	beforeEach(() => {
+		authorship.canWrite = true
 		insertSubmit.mockReset()
 		setValueSubmit.mockReset()
 		created.mockReset()
@@ -216,7 +228,7 @@ describe('AssignmentForm as a route', () => {
 			params: { assignmentID: 'new' },
 		})
 		const wrapper = await mountForm(router, moderator)
-		expect(wrapper.html()).toContain('Create an Assignment')
+		expect(wrapper.html()).toContain('New Assignment')
 		expect(wrapper.find('[data-testid="assignment-fields"]').exists()).toBe(
 			true
 		)
@@ -339,6 +351,7 @@ describe('AssignmentForm as a route', () => {
 			params: { assignmentID: 'new' },
 		})
 		const wrapper = await mountForm(router, moderator)
+		await fillRequired(wrapper)
 
 		await wrapper.find('[data-testid="assignment-save"]').trigger('click')
 		expect(insertSubmit).toHaveBeenCalledTimes(1)
@@ -346,12 +359,65 @@ describe('AssignmentForm as a route', () => {
 		expect(insertOptions.current.makeParams()).toEqual({
 			doc: {
 				doctype: 'LMS Assignment',
-				title: '',
-				type: '',
-				question: '',
+				title: 'Write an essay',
+				type: 'Text',
+				question: '<p>Why?</p>',
 				course: '',
+				enable_scheduling: 0,
+				schedule_start: null,
+				schedule_end: null,
 			},
 		})
+	})
+
+	// Regression: empty create showed a raw server error (#3024, fixed in
+	// #3047).
+	it('names the first missing field instead of sending an empty assignment', async () => {
+		const router = makeRouter()
+		await router.push({
+			name: 'AssignmentForm',
+			params: { assignmentID: 'new' },
+		})
+		const wrapper = await mountForm(router, moderator)
+		const error = vi.mocked(toast.error)
+		error.mockClear()
+		const save = () =>
+			wrapper.find('[data-testid="assignment-save"]').trigger('click')
+
+		await inputs(wrapper)[0].setValue('Write an essay')
+		await save()
+		expect(insertSubmit).not.toHaveBeenCalled()
+		expect(error).toHaveBeenLastCalledWith(
+			'Add a Submission Type before saving.'
+		)
+
+		await inputs(wrapper)[1].setValue('Text')
+		await save()
+		expect(insertSubmit).not.toHaveBeenCalled()
+		expect(error).toHaveBeenLastCalledWith('Add a Question before saving.')
+
+		// Control: the same form, completed, reaches the server.
+		await wrapper.get('[data-testid="rich-text"]').setValue('<p>Why?</p>')
+		await save()
+		expect(insertSubmit).toHaveBeenCalledTimes(1)
+	})
+
+	// Regression: an image-only question failed the required check (#3047
+	// review).
+	it('accepts a question that is only an image', async () => {
+		const router = makeRouter()
+		await router.push({
+			name: 'AssignmentForm',
+			params: { assignmentID: 'new' },
+		})
+		const wrapper = await mountForm(router, moderator)
+		await fillRequired(wrapper)
+		await wrapper
+			.get('[data-testid="rich-text"]')
+			.setValue('<p><img src="/files/a.png"></p>')
+
+		await wrapper.find('[data-testid="assignment-save"]').trigger('click')
+		expect(insertSubmit).toHaveBeenCalledTimes(1)
 	})
 
 	it('updates through its own document resource in edit mode', async () => {
@@ -370,8 +436,37 @@ describe('AssignmentForm as a route', () => {
 			type: 'Text',
 			question: '<p>Why?</p>',
 			course: 'COURSE-1',
+			enable_scheduling: 0,
+			schedule_start: null,
+			schedule_end: null,
 		})
 		expect(insertSubmit).not.toHaveBeenCalled()
+	})
+
+	// Placing an assignment made its edit screen writable since #2826.
+	// Added for audit finding #3 on branch fix/assessment-placement-use-only.
+	it('opens read-only for someone who only placed the assignment', async () => {
+		authorship.canWrite = false
+		const router = makeRouter()
+		docResource.current.doc = RECORD
+		await router.push({
+			name: 'AssignmentForm',
+			params: { assignmentID: 'ASG-0001' },
+		})
+		const wrapper = await mountForm(router, moderator)
+
+		expect(
+			wrapper.find('[data-testid="assignment-read-only-note"]').text()
+		).toBe('Only the authors of this assignment can edit it.')
+		expect(wrapper.find('[data-testid="assignment-save"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="assignment-fields"]').attributes('disabled')
+		).toBeDefined()
+
+		const vm = wrapper.findComponent(AssignmentForm).vm as any
+		vm.saveAssignment()
+		await flushPromises()
+		expect(setValueSubmit).not.toHaveBeenCalled()
 	})
 
 	it('ignores a save from a user who cannot manage assignments', async () => {
@@ -401,6 +496,7 @@ describe('AssignmentForm as a route', () => {
 			params: { assignmentID: 'new' },
 		})
 		const wrapper = await mountForm(router, moderator)
+		await fillRequired(wrapper)
 
 		insertSubmit.mockImplementation(() =>
 			insertOptions.current.onSuccess({ name: 'ASG-0002' })
@@ -408,6 +504,24 @@ describe('AssignmentForm as a route', () => {
 		await wrapper.find('[data-testid="assignment-save"]').trigger('click')
 		await flushPromises()
 		expect(created).toHaveBeenCalledTimes(1)
+	})
+
+	it('never toasts raw browser text when a create fails', async () => {
+		const router = makeRouter()
+		await router.push({
+			name: 'AssignmentForm',
+			params: { assignmentID: 'new' },
+		})
+		await mountForm(router, moderator)
+		const error = vi.mocked(toast.error)
+		error.mockClear()
+		const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+		insertOptions.current.onError(new TypeError('Failed to fetch'))
+		insertOptions.current.onError({ messages: ['Title already exists'] })
+
+		expect(error.mock.calls).toEqual([['Error'], ['Title already exists']])
+		quiet.mockRestore()
 	})
 
 	it('replaces rather than pushes on save, so Back reaches the list', async () => {
@@ -419,6 +533,7 @@ describe('AssignmentForm as a route', () => {
 			state: { lmsFormEntry: true },
 		})
 		const wrapper = await mountForm(router, moderator)
+		await fillRequired(wrapper)
 
 		insertSubmit.mockImplementation(() =>
 			insertOptions.current.onSuccess({ name: 'ASG-0002' })

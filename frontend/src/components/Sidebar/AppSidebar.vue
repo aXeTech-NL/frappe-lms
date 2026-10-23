@@ -85,7 +85,7 @@
 		<div class="m-2 flex flex-col gap-1">
 			<div
 				v-if="readOnlyMode && !sidebarStore.isSidebarCollapsed"
-				class="z-10 m-2 bg-surface-elevation-2 py-2.5 px-3 text-p-xs text-ink-gray-7 rounded-md"
+				class="z-10 m-2 bg-surface-elevation-2 py-2.5 px-3 text-p-xs text-ink-gray-7 rounded-5"
 			>
 				{{
 					__(
@@ -97,7 +97,7 @@
 				v-if="
 					isStudent && !profileIsComplete && !sidebarStore.isSidebarCollapsed
 				"
-				class="flex flex-col gap-3 text-ink-gray-9 py-2.5 px-3 bg-surface-base shadow-sm rounded-md"
+				class="flex flex-col gap-3 text-ink-gray-9 py-2.5 px-3 bg-surface-base shadow-sm rounded-5"
 			>
 				<div class="flex flex-col text-p-sm gap-1">
 					<div class="inline-flex gap-1">
@@ -169,10 +169,8 @@
 						<span
 							class="lucide-circle-alert size-4 text-ink-gray-7 cursor-pointer"
 						/>
-						<template #body>
-							<div
-								class="max-w-[30ch] rounded bg-surface-gray-10 px-2 py-1 text-center text-p-xs text-ink-base shadow-xl"
-							>
+						<template #content>
+							<div class="max-w-[30ch] text-center text-p-xs">
 								{{
 									__(
 										'This site is being updated. You will not be able to make any changes. Full access will be restored shortly.'
@@ -181,24 +179,10 @@
 							</div>
 						</template>
 					</Tooltip>
-					<Tooltip
-						v-if="showAppointmentIcon"
-						:text="__('Book a free onboarding session with the Frappe team')"
-					>
-						<span
-							class="lucide-phone size-4 text-ink-gray-7 cursor-pointer"
-							@click="redirectToAppointmentScreen()"
-						/>
-					</Tooltip>
 					<Tooltip v-if="showOnboarding" :text="__('Help')">
 						<span
 							class="lucide-circle-help size-4 text-ink-gray-7 cursor-pointer"
-							@click="
-								() => {
-									showHelpModal = minimize ? true : !showHelpModal
-									minimize = !showHelpModal
-								}
-							"
+							@click="toggleHelp"
 						/>
 					</Tooltip>
 					<Tooltip :text="__('Powered by Frappe Learning')">
@@ -224,6 +208,7 @@
 						@click="toggleSidebar()"
 					/>
 				</Tooltip>
+				<span class="sr-only">{{ readOnlyNotice }}</span>
 			</div>
 		</div>
 		<HelpModal
@@ -256,6 +241,7 @@
 <script setup>
 import { getSidebarLinks } from '@/utils'
 import { usersStore } from '@/stores/user'
+import { seesOnboarding } from '@/utils/onboarding'
 import { useSidebar } from '@/stores/sidebar'
 import { useSettings } from '@/stores/settings'
 import { Button, call, Tooltip, toast } from 'frappe-ui'
@@ -283,16 +269,17 @@ import {
 	Users,
 	BookText,
 } from 'lucide-vue-next'
+import { TrialBanner } from '@framework/ui/components/TrialBanner/index'
 import {
-	TrialBanner,
 	HelpModal,
 	GettingStartedBanner,
 	useOnboarding,
 	showHelpModal,
 	minimize,
 	IntermediateStepModal,
-	useTelemetry,
-} from 'frappe-ui/frappe'
+} from '@framework/ui/components/Onboarding/index'
+import { useTelemetry } from '@framework/ui/telemetry/index'
+import { setFormSource } from '@/composables/formTracking'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
 import UserDropdown from '@/components/Sidebar/UserDropdown.vue'
 import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
@@ -330,6 +317,23 @@ let onboardingDetails
 let isOnboardingStepsCompleted = false
 const readOnlyMode = window.read_only_mode
 const isRtl = document.documentElement.dir === 'rtl'
+const openCourseForm = () => {
+	setFormSource('onboarding')
+	openFormRoute(router, { name: 'NewCourse' })
+}
+
+// Opens the help panel, or brings it back when it was minimized.
+const toggleHelp = () => {
+	showHelpModal.value = minimize.value ? true : !showHelpModal.value
+	minimize.value = !showHelpModal.value
+	if (showHelpModal.value) {
+		capture('onboarding_help_opened', {
+			role: userResource.data?.is_system_manager
+				? 'system_manager'
+				: 'moderator',
+		})
+	}
+}
 const iconProps = {
 	strokeWidth: 1.5,
 	width: 16,
@@ -366,17 +370,20 @@ const updateSidebarLinksVisibility = () => {
 	})
 }
 
+const onKeyboardShortcut = (e) => {
+	if (
+		e.key === 'k' &&
+		(e.ctrlKey || e.metaKey) &&
+		!e.repeat &&
+		!e.target.classList.contains('ProseMirror')
+	) {
+		toggleCommandPalette()
+		e.preventDefault()
+	}
+}
+
 const addKeyboardShortcut = () => {
-	window.addEventListener('keydown', (e) => {
-		if (
-			e.key === 'k' &&
-			(e.ctrlKey || e.metaKey) &&
-			!e.target.classList.contains('ProseMirror')
-		) {
-			toggleCommandPalette()
-			e.preventDefault()
-		}
-	})
+	window.addEventListener('keydown', onKeyboardShortcut)
 }
 
 const toggleCommandPalette = () => {
@@ -444,9 +451,9 @@ const steps = reactive([
 		completed: false,
 		onClick: () => {
 			minimize.value = true
-			router.push({
-				name: 'Courses',
-			})
+			// Opens the form itself: sent to the course list instead, nothing
+			// happened when the list was already open.
+			openCourseForm()
 		},
 	},
 	{
@@ -462,10 +469,10 @@ const steps = reactive([
 				router.push({
 					name: 'CourseDetail',
 					params: { courseName: course },
-					hash: '#settings',
+					hash: '#editor',
 				})
 			} else {
-				openFormRoute(router, { name: 'NewCourse' })
+				openCourseForm()
 			}
 		},
 	},
@@ -482,10 +489,10 @@ const steps = reactive([
 				router.push({
 					name: 'CourseDetail',
 					params: { courseName: course },
-					hash: '#settings',
+					hash: '#editor',
 				})
 			} else {
-				openFormRoute(router, { name: 'NewCourse' })
+				openCourseForm()
 			}
 		},
 	},
@@ -518,7 +525,8 @@ const steps = reactive([
 		completed: false,
 		onClick: () => {
 			minimize.value = true
-			router.push({ name: 'Batches' })
+			setFormSource('onboarding')
+			openFormRoute(router, { name: 'NewBatch' })
 		},
 	},
 	{
@@ -634,7 +642,7 @@ const articles = ref([
 ])
 
 const setUpOnboarding = () => {
-	if (userResource.data?.is_system_manager) {
+	if (seesOnboarding(userResource.data)) {
 		onboardingDetails = useOnboarding('learning')
 		onboardingDetails.setUp(steps)
 		isOnboardingStepsCompleted = onboardingDetails.isOnboardingStepsCompleted
@@ -685,36 +693,8 @@ const profileIsComplete = computed(() => {
 	)
 })
 
-const showAppointmentIcon = computed(() => {
-	let isTrialPlan = userResource.data?.site_info?.plan?.is_trial_plan
-	let trialEndDate = calculateTrialEndDays(
-		userResource.data?.site_info?.trial_end_date
-	)
-	return (
-		userResource.data?.is_system_manager &&
-		userResource.data?.is_fc_site &&
-		isTrialPlan &&
-		trialEndDate > 0
-	)
-})
-
-const calculateTrialEndDays = (trialEndDate) => {
-	if (!trialEndDate) return 0
-
-	trialEndDate = new Date(trialEndDate)
-	const today = new Date()
-	const diffTime = trialEndDate - today
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-	return diffDays
-}
-
-const redirectToAppointmentScreen = () => {
-	openExternal(
-		'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0c7Z3XIpW1WgbeIuktSaoX6qudoYuSdRbIlJty5TW7p4IZaOk5viHQGwTNi6HpNVqzOZOTHcle'
-	)
-}
-
 onUnmounted(() => {
 	socket.off('publish_lms_notifications')
+	window.removeEventListener('keydown', onKeyboardShortcut)
 })
 </script>

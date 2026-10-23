@@ -23,7 +23,7 @@
 				<template #prefix>
 					<span class="lucide-plus size-4" />
 				</template>
-				{{ __('Create') }}
+				{{ __('New Assignment') }}
 			</Button>
 		</template>
 
@@ -94,6 +94,7 @@ const readOnlyMode = window.read_only_mode
 onMounted(() => {
 	if (!user.data?.is_moderator && !user.data?.is_instructor) {
 		router.push({ name: 'Courses' })
+		return
 	}
 	titleFilter.value = router.currentRoute.value.query.title
 	typeFilter.value = router.currentRoute.value.query.type

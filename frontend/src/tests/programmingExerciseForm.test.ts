@@ -27,7 +27,6 @@ const {
 	createListResourceMock,
 	createResourceMock,
 	createDocumentResourceMock,
-	passthrough,
 } = vi.hoisted(() => {
 	// @/utils pulls in plyr, which touches matchMedia at import time.
 	window.matchMedia ??= (() => ({
@@ -39,13 +38,6 @@ const {
 		createListResourceMock: vi.fn(),
 		createResourceMock: vi.fn(),
 		createDocumentResourceMock: vi.fn(),
-		// Renders its label, as the real Combobox/Select/MultiSelect do: a stub
-		// that drops it makes "every field is labelled" pass by omission.
-		passthrough: {
-			inheritAttrs: false,
-			props: ['label'],
-			template: `<div><label v-if="label">{{ label }}</label><slot name="icon" /><slot /></div>`,
-		},
 	}
 })
 
@@ -75,9 +67,6 @@ const documentResourceStub = (doc: unknown) => (options: { name?: string }) =>
 	options.name ? { doc } : undefined
 createDocumentResourceMock.mockImplementation(documentResourceStub(null))
 
-// frappe-ui's internal module resolution doesn't work under vitest (see
-// FormShell.test.ts), so importActual() on it throws ERR_MODULE_NOT_FOUND.
-// Every export the form and FormShell pull in has to be stubbed by hand.
 // HeaderButton wraps frappe-ui's Button in a Tooltip below the mobile
 // breakpoint, and the hand-written frappe-ui mock here has no Tooltip. Stub it
 // down to the bare button so the fallthrough attrs the assertions use
@@ -89,11 +78,11 @@ vi.mock('@/components/HeaderButton.vue', () => ({
 	},
 }))
 
+// Only the exports the form and FormShell use; the real barrel never loads.
 vi.mock('frappe-ui', () => ({
 	createListResource: createListResourceMock,
 	createResource: createResourceMock,
 	createDocumentResource: createDocumentResourceMock,
-	call: vi.fn(),
 	toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 	Dialog: {
 		name: 'Dialog',
@@ -102,23 +91,22 @@ vi.mock('frappe-ui', () => ({
 		template: `<div v-if="open" role="dialog"><h2>{{ title }}</h2><slot name="title" /><slot /><slot name="actions" /></div>`,
 	},
 	Badge: { template: `<span><slot /></span>` },
-	Button: {
-		inheritAttrs: false,
-		template: `<button v-bind="$attrs"><slot name="prefix" /><slot name="icon" /><slot /></button>`,
-	},
 	FormControl: {
 		props: ['modelValue', 'label', 'type', 'required', 'options'],
 		emits: ['update:modelValue'],
 		template: `<label>{{ label }}<input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" /></label>`,
 	},
-	FormLabel: {
-		props: ['label', 'required', 'id'],
-		template: `<label :for="id">{{ label }}</label>`,
-	},
-	Combobox: passthrough,
-	MultiSelect: passthrough,
-	Select: passthrough,
 }))
+
+// The server's write answer for the exercise, read at mount.
+const authorship = vi.hoisted(() => ({ canWrite: true as boolean | null }))
+vi.mock('@/composables/useCanWrite', async () => {
+	const { ref } = await import('vue')
+	return {
+		useCanWrite: (_doctype: string, name: () => string | undefined) =>
+			ref(name() ? authorship.canWrite : true),
+	}
+})
 
 // The rich text editor drags in ProseMirror; nothing under test involves it.
 vi.mock('@/components/RichTextEditor.vue', () => ({
@@ -209,6 +197,7 @@ const FIELD_LABELS = ['Title', 'Language', 'Test Cases', 'Problem Statement']
 
 describe('ProgrammingExerciseForm as a route', () => {
 	beforeEach(() => {
+		authorship.canWrite = true
 		insertSubmit.mockReset()
 		setValueSubmit.mockReset()
 		deleteSubmit.mockReset()
@@ -401,6 +390,40 @@ describe('ProgrammingExerciseForm as a route', () => {
 		expect(setValueSubmit).toHaveBeenCalledTimes(1)
 		expect(setValueSubmit.mock.calls[0][0]).toMatchObject({ name: 'EX-0001' })
 		expect(exercisesReload).toHaveBeenCalledTimes(1)
+	})
+
+	// Placing an exercise made its edit screen writable since #2826.
+	// Added for audit finding #3 on branch fix/assessment-placement-use-only.
+	it('opens read-only for someone who only placed the exercise', async () => {
+		authorship.canWrite = false
+		createDocumentResourceMock.mockImplementation(
+			documentResourceStub({ name: 'EX-0001', title: 'T', language: 'Python' })
+		)
+		const router = makeRouter()
+		await router.push('/programming-exercises/edit/EX-0001')
+		const wrapper = await mountForm(router, moderator)
+
+		expect(
+			wrapper.find('[data-testid="programming-exercise-read-only-note"]').text()
+		).toBe('Only the authors of this programming exercise can edit it.')
+		expect(
+			wrapper.find('[data-testid="programming-exercise-delete"]').exists()
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="programming-exercise-save"]').exists()
+		).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="programming-exercise-fields"]')
+				.attributes('disabled')
+		).toBeDefined()
+
+		const vm = wrapper.findComponent(ProgrammingExerciseForm).vm as any
+		vm.saveExercise()
+		vm.deleteExercise()
+		await flushPromises()
+		expect(setValueSubmit).not.toHaveBeenCalled()
+		expect(deleteSubmit).not.toHaveBeenCalled()
 	})
 
 	it('reloads the header count after a create', async () => {

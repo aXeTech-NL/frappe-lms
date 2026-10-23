@@ -1,5 +1,5 @@
 <template>
-	<FormShell :title="__('Enroll a Student')" size="lg" @close="close">
+	<FormShell :title="__('Enroll Student')" size="lg" @close="close">
 		<template #default>
 			<div v-if="refusal" class="p-4 text-base text-ink-gray-6">
 				{{ refusal }}
@@ -30,7 +30,7 @@
 			<HeaderButton
 				v-if="!refusal"
 				data-testid="batch-student-save"
-				:label="__('Save')"
+				:label="__('Enroll')"
 				variant="solid"
 				:loading="enrollment.loading"
 				@click="submit"
@@ -47,13 +47,17 @@ import {
 	getCachedResource,
 	toast,
 } from 'frappe-ui'
-import { useOnboarding } from 'frappe-ui/frappe'
+import { useOnboarding } from '@framework/ui/components/Onboarding/index'
+import { seesOnboarding } from '@/utils/onboarding'
 import { useRoute } from 'vue-router'
 import { openSettings } from '@/utils'
 import Link from '@/components/Controls/Link.vue'
 import FormShell from '@/components/FormShell.vue'
 import HeaderButton from '@/components/HeaderButton.vue'
-import { batchRouteLocation } from '@/composables/useBatchForms'
+import {
+	batchRouteLocation,
+	useBatchDetails,
+} from '@/composables/useBatchForms'
 import { useFormRoute } from '@/composables/useFormRoute'
 import { submitResource } from '@/utils/resource'
 
@@ -68,6 +72,7 @@ const user = inject('$user')
 const route = useRoute()
 const readOnlyMode = window.read_only_mode
 const { updateOnboardingStep } = useOnboarding('learning')
+const batch = useBatchDetails(() => props.batchName)
 
 const student = ref(null)
 const payment = ref(null)
@@ -81,10 +86,14 @@ const { close, saveAndReplace } = useFormRoute(
 // converted form checks it and a read-only site cannot insert.
 //
 // UX gate, not an authorization boundary — validate_owner() on LMS Batch
-// Enrollment is, and it demands the same two roles.
+// Enrollment is, and it now also passes a tagged Course Creator via can_author_batch.
 const refusal = computed(() => {
 	if (readOnlyMode) return __('This site is in read-only mode.')
-	if (!user.data?.is_moderator && !user.data?.is_evaluator) {
+	if (
+		!user.data?.is_moderator &&
+		!user.data?.is_evaluator &&
+		!batch.data?.can_manage
+	) {
 		return __('You do not have permission to enroll students in this batch.')
 	}
 	return ''
@@ -149,7 +158,7 @@ const submit = () => {
 		{},
 		{
 			onSuccess() {
-				if (user.data?.is_system_manager) {
+				if (seesOnboarding(user.data)) {
 					updateOnboardingStep('add_batch_student')
 				}
 				reloadDashboard()

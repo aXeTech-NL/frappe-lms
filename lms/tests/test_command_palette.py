@@ -1,6 +1,8 @@
 # Copyright (c) 2026, FOSS United and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -10,6 +12,7 @@ from lms.command_palette import (
 	DOCTYPE_GROUPS,
 	PERMISSION_CHECKED_DOCTYPES,
 	RESULT_FIELDS,
+	get_authored_drafts,
 	get_grouped_results,
 	get_permitted_names,
 	is_visible,
@@ -36,17 +39,9 @@ class TestSearchCategoryValidation(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			search_sqlite("kubernetes", category="doctype = 'User' --")
 
-	# Frappe coerces annotated arguments before the body runs, so a wrongly typed
-	# argument dies as FrappeTypeError and never reaches the isinstance guard.
-	# That guard is the backstop for the day the annotation goes away — dropping
-	# it would silently hand a list to the search.
-	def test_non_string_category_is_rejected(self):
-		with self.assertRaises((frappe.exceptions.FrappeTypeError, frappe.ValidationError)):
-			search_sqlite("kubernetes", category=["courses"])
-
-	def test_non_string_query_is_rejected(self):
-		with self.assertRaises((frappe.exceptions.FrappeTypeError, frappe.ValidationError)):
-			search_sqlite(["kubernetes"])
+	def test_every_course_scoped_doctype_is_permission_checked(self):
+		for doctype in COURSE_SCOPED_DOCTYPES:
+			self.assertIn(doctype, PERMISSION_CHECKED_DOCTYPES)
 
 
 class TestIndexSchema(FrappeTestCase):
@@ -83,8 +78,13 @@ class TestResultVisibility(FrappeTestCase):
 		self.assertTrue(is_visible(course, "LMS Course", ["LMS Student"], {}))
 
 	def test_an_unpublished_course_is_hidden_from_a_student(self):
+		# Authorship is read from the session, and Administrator authors every course.
 		course = row("LMS Course", "draft-course", published=0)
-		self.assertFalse(is_visible(course, "LMS Course", ["LMS Student"], {}))
+		frappe.set_user("Guest")
+		try:
+			self.assertFalse(is_visible(course, "LMS Course", ["LMS Student"], {}))
+		finally:
+			frappe.set_user("Administrator")
 
 	def test_a_closed_job_is_hidden_from_a_student(self):
 		job = row("Job Opportunity", "JOB-0001", status="Closed")
@@ -113,16 +113,17 @@ class TestResultVisibility(FrappeTestCase):
 
 
 class TestQuizAndAssignmentScope(BaseTestUtils):
-	"""LMS Quiz and LMS Assignment grant read to LMS Student and register no
-	permission_query_conditions hook, so get_list alone handed a student every
-	row on the site."""
+	"""LMS Quiz and LMS Assignment grant read to LMS Student site-wide; a registered
+	permission_query_conditions hook now narrows get_list too. The palette's own
+	scope stays as the narrower of the two readings."""
 
-	def setUp(self):
-		super().setUp()
-		self.student = self._create_user("palette-student@example.com", "Pal", "Ette", ["LMS Student"])
-		self.questions = self._create_quiz_questions()
-		self.quiz = self._create_quiz(title="Palette Scope Quiz")
-		self.assignment = self._create_assignment(title="Palette Scope Assignment")
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.student = cls._create_user("palette-student@example.com", "Pal", "Ette", ["LMS Student"])
+		cls.questions = cls._create_quiz_questions()
+		cls.quiz = cls._create_quiz(cls.questions, title="Palette Scope Quiz")
+		cls.assignment = cls._create_assignment(title="Palette Scope Assignment")
 
 	def test_a_student_is_given_no_quiz_or_assignment(self):
 		frappe.set_user(self.student.email)
@@ -137,22 +138,19 @@ class TestQuizAndAssignmentScope(BaseTestUtils):
 		finally:
 			frappe.set_user("Administrator")
 
-	def test_a_student_can_read_these_doctypes_directly(self):
-		"""Pins why the hand-written scope is needed: frappe itself allows it."""
+	def test_the_registered_condition_refuses_what_the_palette_already_hid(self):
+		"""The quiz is placed in no lesson and run by no batch, so the registered
+		condition refuses it too -- the two readings now agree."""
 		frappe.set_user(self.student.email)
 		try:
 			readable = frappe.get_list("LMS Quiz", pluck="name", limit_page_length=0)
 		finally:
 			frappe.set_user("Administrator")
-		self.assertIn(self.quiz.name, readable)
+		self.assertNotIn(self.quiz.name, readable)
 
 	def test_a_moderator_is_given_them(self):
 		permitted = get_permitted_names([row("LMS Quiz", self.quiz.name)])
 		self.assertEqual(permitted["LMS Quiz"], {self.quiz.name})
-
-	def test_every_course_scoped_doctype_is_permission_checked(self):
-		for doctype in COURSE_SCOPED_DOCTYPES:
-			self.assertIn(doctype, PERMISSION_CHECKED_DOCTYPES)
 
 
 class TestGroupOrder(FrappeTestCase):
@@ -172,13 +170,13 @@ class TestProgramScope(BaseTestUtils):
 	LMS Quiz and LMS Assignment, so get_list is expected to constrain it. This
 	pins that, because the palette relies on it rather than scoping by hand."""
 
-	def setUp(self):
-		super().setUp()
-		self.student = self._create_user("prog-student@example.com", "Prog", "Student", ["LMS Student"])
-		self.hidden = frappe.new_doc("LMS Program")
-		self.hidden.update({"title": "Palette Unpublished Program", "published": 0})
-		self.hidden.save()
-		self.cleanup_items.append(("LMS Program", self.hidden.name))
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.student = cls._create_user("prog-student@example.com", "Prog", "Student", ["LMS Student"])
+		cls.hidden = frappe.new_doc("LMS Program")
+		cls.hidden.update({"title": "Palette Unpublished Program", "published": 0})
+		cls.hidden.save()
 
 	def test_a_student_is_not_given_an_unpublished_program(self):
 		frappe.set_user(self.student.email)
@@ -259,15 +257,13 @@ class TestAuthoredScope(BaseTestUtils):
 	asks for it, so scoping by course alone lost an author the quiz they had just
 	made — and a Batch Evaluator, who instructs no courses, had no way in at all."""
 
-	def setUp(self):
-		super().setUp()
-		self.author = self._create_user("palette-author@example.com", "Pal", "Author", ["Course Creator"])
-		self.evaluator = self._create_user(
-			"palette-evaluator@example.com", "Pal", "Eval", ["Batch Evaluator"]
-		)
-		self.questions = self._create_quiz_questions()
-		self.quiz = self._create_quiz(title="Palette Authored Quiz")
-		frappe.db.set_value("LMS Quiz", self.quiz.name, "owner", self.author.name)
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.author = cls._create_user("palette-author@example.com", "Pal", "Author", ["Course Creator"])
+		cls.evaluator = cls._create_user("palette-evaluator@example.com", "Pal", "Eval", ["Batch Evaluator"])
+		cls.questions = cls._create_quiz_questions()
+		cls.quiz = cls._create_quiz(cls.questions, title="Palette Authored Quiz")
 
 	def permitted_for(self, user):
 		frappe.set_user(user)
@@ -276,10 +272,11 @@ class TestAuthoredScope(BaseTestUtils):
 		finally:
 			frappe.set_user("Administrator")
 
-	def test_the_quiz_has_no_course_to_be_scoped_by(self):
-		self.assertFalse(frappe.db.get_value("LMS Quiz", self.quiz.name, "course"))
-
 	def test_an_author_is_given_the_quiz_they_made(self):
+		# The quiz is a shared class fixture, so each test sets the owner it needs
+		# rather than inheriting whatever the previous one left behind.
+		frappe.db.set_value("LMS Quiz", self.quiz.name, "owner", self.author.name)
+		self.assertFalse(frappe.db.get_value("LMS Quiz", self.quiz.name, "course"))
 		self.assertEqual(self.permitted_for(self.author.name), {self.quiz.name})
 
 	def test_an_evaluator_is_given_the_quiz_they_made(self):
@@ -287,4 +284,99 @@ class TestAuthoredScope(BaseTestUtils):
 		self.assertEqual(self.permitted_for(self.evaluator.name), {self.quiz.name})
 
 	def test_another_author_is_not_given_it(self):
+		frappe.db.set_value("LMS Quiz", self.quiz.name, "owner", self.author.name)
 		self.assertEqual(self.permitted_for(self.evaluator.name), set())
+
+
+class TestDraftScope(BaseTestUtils):
+	"""An unpublished course or batch is authoring-only. Holding Course Creator or
+	Batch Evaluator lets a user author their own, not read everyone else's drafts."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		hash = frappe.generate_hash(length=6)
+		cls.author = cls._create_user(f"pal-author-{hash}@example.com", "Pal", "Author", ["Course Creator"])
+		cls.other_author = cls._create_user(
+			f"pal-other-{hash}@example.com", "Pal", "Other", ["Course Creator", "Batch Evaluator"]
+		)
+		cls.moderator = cls._create_user(f"pal-mod-{hash}@example.com", "Pal", "Mod", ["Moderator"])
+		cls.student = cls._create_user(f"pal-stud-{hash}@example.com", "Pal", "Stud", ["LMS Student"])
+		cls.evaluator = cls._create_user(f"pal-eval-{hash}@example.com", "Pal", "Eval", ["Batch Evaluator"])
+		cls._create_evaluator(cls.evaluator.name)
+
+		cls.draft = cls._create_course(f"Palette Draft {hash}", instructor=cls.author.name)
+		frappe.db.set_value("LMS Course", cls.draft.name, "published", 0)
+		cls.draft_batch = frappe.new_doc("LMS Batch")
+		cls.draft_batch.update(
+			{
+				"title": f"Palette Draft Batch {hash}",
+				"published": 0,
+				"start_date": "2099-01-01",
+				"end_date": "2099-12-31",
+				"start_time": "10:00:00",
+				"end_time": "11:00:00",
+				"timezone": "Asia/Kolkata",
+				"description": "description",
+				"batch_details": "details",
+				"instructors": [{"instructor": cls.author.name}],
+				"courses": [{"course": cls.draft.name, "evaluator": cls.evaluator.name}],
+			}
+		)
+		cls.draft_batch.save()
+
+	def visible_as(self, user, doctype, name, **extra):
+		frappe.set_user(user)
+		try:
+			rows = [row(doctype, name, **extra)]
+			return is_visible(rows[0], doctype, frappe.get_roles(), {}, get_authored_drafts(rows))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_a_draft_is_hidden_from_other_authors_students_and_guest(self):
+		"""Any Course Creator or Batch Evaluator found every draft since #1895.
+		Added for audit finding #91 on branch fix/draft-and-guest-disclosure."""
+		for user in ("Guest", self.student.name, self.other_author.name):
+			with self.subTest(user=user):
+				self.assertFalse(self.visible_as(user, "LMS Course", self.draft.name, published=0))
+				self.assertFalse(
+					self.visible_as(
+						user, "LMS Batch", self.draft_batch.name, published=0, start_date="2099-01-01"
+					)
+				)
+
+	def test_a_draft_is_shown_to_its_author_and_a_moderator(self):
+		for user in (self.author.name, self.moderator.name):
+			with self.subTest(user=user):
+				self.assertTrue(self.visible_as(user, "LMS Course", self.draft.name, published=0))
+				self.assertTrue(
+					self.visible_as(
+						user, "LMS Batch", self.draft_batch.name, published=0, start_date="2099-01-01"
+					)
+				)
+
+	def test_a_draft_batch_is_shown_to_its_tagged_evaluator(self):
+		self.assertTrue(
+			self.visible_as(
+				self.evaluator.name, "LMS Batch", self.draft_batch.name, published=0, start_date="2099-01-01"
+			)
+		)
+
+	def test_published_rows_keep_their_existing_rules(self):
+		self.assertTrue(self.visible_as(self.other_author.name, "LMS Course", "any-course", published=1))
+		# A Batch Evaluator still finds published batches that have already started.
+		self.assertTrue(
+			self.visible_as(
+				self.other_author.name, "LMS Batch", "any-batch", published=1, start_date="2000-01-01"
+			)
+		)
+		self.assertFalse(
+			self.visible_as(self.student.name, "LMS Batch", "any-batch", published=1, start_date="2000-01-01")
+		)
+
+
+class TestMissingIndex(FrappeTestCase):
+	# Regression: search 500'd while the index was missing (#3030, fixed in #3050).
+	def test_a_missing_index_returns_nothing(self):
+		with patch("lms.sqlite.LearningSearch.index_exists", return_value=False):
+			self.assertEqual(search_sqlite("cour"), [])

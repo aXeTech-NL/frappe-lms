@@ -1,7 +1,7 @@
 <template>
 	<FormShell :title="__('Edit Profile')" @close="close">
 		<template #header-action>
-			<Badge v-if="isDirty" theme="orange">
+			<Badge v-if="isDirty" theme="amber">
 				{{ __('Not Saved') }}
 			</Badge>
 		</template>
@@ -21,6 +21,7 @@
 					<Uploader
 						v-model="profile.image"
 						:label="__('Profile Image')"
+						:required="false"
 						shape="circle"
 					/>
 					<FormControl
@@ -38,7 +39,7 @@
 					<FormControl
 						v-model="profile.open_to"
 						type="select"
-						:options="[' ', 'Work', 'Hiring']"
+						:options="[{ label: '', value: '' }, 'Work', 'Hiring']"
 						:label="__('Open to')"
 						:placeholder="__('Looking for new work or hiring talent?')"
 					/>
@@ -48,14 +49,13 @@
 						doctype="Language"
 					/>
 					<div>
-						<div class="mb-1.5 text-p-sm-medium text-ink-gray-7">
-							{{ __('Bio') }}
-						</div>
+						<InputLabel :id="bioLabelId" :label="__('Bio')" class="mb-1.5" />
 						<RichTextEditor
+							:ariaLabelledby="bioLabelId"
 							:fixedMenu="true"
 							@change="(val) => (profile.bio = val)"
 							:content="profile.bio"
-							editorClass="prose-sm py-2 px-2 min-h-[280px] border-outline-gray-2 hover:border-outline-gray-3 rounded-b-md bg-surface-gray-3"
+							editorClass="prose-sm py-2 px-2 min-h-[280px] border-outline-gray-2 hover:border-outline-gray-3 rounded-b-5 bg-surface-gray-3"
 						/>
 					</div>
 				</div>
@@ -76,7 +76,8 @@
 </template>
 <script setup>
 import { Badge, createResource, FormControl, toast } from 'frappe-ui'
-import { computed, inject, reactive, ref, watch } from 'vue'
+import { computed, inject, reactive, ref, useId, watch } from 'vue'
+import { InputLabel } from 'frappe-ui/experimental'
 import { useRouter } from 'vue-router'
 import { sanitizeOnWrite } from '@/utils/sanitizeOnWrite'
 import FormShell from '@/components/FormShell.vue'
@@ -104,6 +105,7 @@ const props = defineProps({
 
 const user = inject('$user')
 const router = useRouter()
+const bioLabelId = useId()
 const readOnlyMode = window.read_only_mode
 const isDirty = ref(false)
 
@@ -131,6 +133,7 @@ const profile = reactive({
 	first_name: '',
 	last_name: '',
 	headline: '',
+	language: '',
 	bio: '',
 	image: '',
 	open_to: '',
@@ -139,10 +142,11 @@ const profile = reactive({
 	twitter: '',
 })
 
-// Normalised to '' on both sides: `language` is nullable on User, so an unset
-// language would otherwise read as a change on every save.
+// Every key above is a User fieldname except `image`, which edits `user_image`.
+const serverField = (key) => (key === 'image' ? 'user_image' : key)
+
 const hasLanguageChanged = computed(
-	() => (profile.language ?? '') !== (profileData.value?.language ?? '')
+	() => profile.language !== (profileData.value?.language ?? '')
 )
 
 const updateProfile = createResource({
@@ -161,7 +165,7 @@ const updateProfile = createResource({
 
 const validateMandatoryFields = () => {
 	const missingFields = []
-	if (!profile.first_name) missingFields.push(__('First Name'))
+	if (!profile.first_name.trim()) missingFields.push(__('First Name'))
 	if (missingFields.length) {
 		toast.error(
 			__('Please fill the mandatory fields: {0}').format(
@@ -210,17 +214,12 @@ const saveProfile = () => {
 
 watch(
 	profile,
-	(newVal) => {
+	() => {
 		const data = profileData.value
 		if (!data) return
-		const keys = Object.keys(newVal).filter((key) => key !== 'image')
-		for (const key of keys) {
-			if (newVal[key] !== data[key]) {
-				isDirty.value = true
-				return
-			}
-		}
-		isDirty.value = profile.image !== data.user_image
+		isDirty.value = Object.keys(profile).some(
+			(key) => profile[key] !== (data[serverField(key)] ?? '')
+		)
 	},
 	{ deep: true }
 )
@@ -232,16 +231,9 @@ watch(
 	profileData,
 	(data) => {
 		if (!data) return
-		profile.first_name = data.first_name
-		profile.last_name = data.last_name
-		profile.headline = data.headline
-		profile.language = data.language
-		profile.bio = data.bio
-		profile.open_to = data.open_to
-		profile.linkedin = data.linkedin
-		profile.github = data.github
-		profile.twitter = data.twitter
-		profile.image = data.user_image
+		for (const key of Object.keys(profile)) {
+			profile[key] = data[serverField(key)] ?? ''
+		}
 		isDirty.value = false
 	},
 	{ immediate: true }
