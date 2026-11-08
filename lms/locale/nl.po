@@ -12420,3 +12420,64 @@ msgstr "{} Geslaagd"
 msgid "{} Published"
 msgstr "{} Gepubliceerd"
 
+#. Native Commerce checkout
+msgid "Checkout"
+msgstr "Afrekenen"
+
+msgid "Loading checkout..."
+msgstr "De betaalpagina wordt geladen..."
+
+msgid "Checkout is unavailable. Please return to the course or contact the administrator."
+msgstr "Afrekenen is niet beschikbaar. Ga terug naar de cursus of neem contact op met de beheerder."
+
+msgid "Test payment. No real money will be charged."
+msgstr "Testbetaling. Er wordt geen echt geld afgeschreven."
+
+msgid "One-time course access. This does not start a subscription or automatic debit."
+msgstr "Eenmalige aankoop van cursustoegang. U sluit hiermee geen abonnement af en geeft geen toestemming voor automatische incasso."
+
+msgid "Continue existing checkout"
+msgstr "Bestaande betaling hervatten"
+
+msgid "I accept the terms and request access after payment."
+msgstr "Ik ga akkoord met de voorwaarden en verzoek om toegang na betaling."
+
+msgid "Read the terms"
+msgstr "Lees de voorwaarden"
+
+msgid "Continue to payment"
+msgstr "Verder naar betalen"
+
+msgid "Payment could not be opened. Refresh this page to recover your existing checkout; do not start a separate payment."
+msgstr "De betaling kon niet worden geopend. Vernieuw deze pagina om uw bestaande betaling te hervatten. Start geen tweede betaling."
+
+msgid "Back to course"
+msgstr "Terug naar de cursus"
+
+msgid "Payment status"
+msgstr "Betaalstatus"
+
+msgid "Checking payment..."
+msgstr "Uw betaling wordt gecontroleerd..."
+
+msgid "Payment confirmation is not available yet. Please check again; do not pay twice."
+msgstr "Uw betaling is nog niet bevestigd. Controleer de status opnieuw en betaal niet nogmaals."
+
+msgid "Payment confirmed. Open the course to enroll or continue learning."
+msgstr "Uw betaling is bevestigd. Open de cursus om u in te schrijven of verder te leren."
+
+msgid "Payment was not completed. You have not received access from this order."
+msgstr "De betaling is niet voltooid. Deze bestelling heeft u geen toegang gegeven."
+
+msgid "This payment was reversed. Access from this order has been withdrawn."
+msgstr "Deze betaling is teruggedraaid. De toegang vanuit deze bestelling is ingetrokken."
+
+msgid "Your payment is awaiting confirmation. Returning from the payment provider does not confirm payment."
+msgstr "Uw betaling wacht op bevestiging. Terugkeren vanaf de betaalprovider betekent niet dat de betaling is geslaagd."
+
+msgid "Order"
+msgstr "Bestelling"
+
+msgid "Check payment status"
+msgstr "Betaalstatus controleren"
+

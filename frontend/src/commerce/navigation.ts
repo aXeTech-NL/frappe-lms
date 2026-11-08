@@ -13,4 +13,12 @@ export const commerceRoutes = [{
 	path: '/access',
 	name: 'CommerceAccess',
 	component: () => import('./MyAccess.vue'),
+}, {
+	path: '/checkout/return/:order',
+	name: 'CommerceCheckoutReturn',
+	component: () => import('./CheckoutReturn.vue'),
+}, {
+	path: '/checkout/:offering',
+	name: 'CommerceCheckout',
+	component: () => import('./Checkout.vue'),
 }]

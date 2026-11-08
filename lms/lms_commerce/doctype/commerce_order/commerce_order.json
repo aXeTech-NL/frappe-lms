@@ -1,0 +1,43 @@
+{
+ "doctype": "DocType",
+ "name": "Commerce Order",
+ "module": "LMS Commerce",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "allow_rename": 0,
+ "track_changes": 1,
+ "field_order": ["member", "offering", "course", "course_title", "amount", "currency", "status", "payment_gateway", "mode", "provider_payment_id", "checkout_url", "entitlement", "refunded_amount", "charged_back_amount", "access_revoked", "last_checked_on", "customer_reference", "quote_token", "terms_url", "accepted_on", "redirect_url", "request_fingerprint", "open_order_key", "payment_key"],
+ "fields": [
+  {"fieldname": "member", "label": "Member", "fieldtype": "Link", "options": "User", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "offering", "label": "Offering", "fieldtype": "Link", "options": "Commerce Offering", "reqd": 1},
+  {"fieldname": "course", "label": "Course", "fieldtype": "Link", "options": "LMS Course", "reqd": 1},
+  {"fieldname": "course_title", "label": "Course Title at Purchase", "fieldtype": "Data", "reqd": 1},
+  {"fieldname": "amount", "label": "Total Amount", "fieldtype": "Currency", "options": "currency", "precision": "2", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "currency", "label": "Currency", "fieldtype": "Link", "options": "Currency", "reqd": 1},
+  {"fieldname": "status", "label": "Payment Status", "fieldtype": "Select", "options": "creating\nopen\npending\nauthorized\npaid\nfailed\ncanceled\nexpired\npartially_refunded\nrefunded\npartially_charged_back\ncharged_back", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "payment_gateway", "label": "Payment Gateway", "fieldtype": "Link", "options": "Payment Gateway", "reqd": 1},
+  {"fieldname": "mode", "label": "Mode", "fieldtype": "Select", "options": "test\nlive", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "provider_payment_id", "label": "Provider Payment ID", "fieldtype": "Data", "search_index": 1},
+  {"fieldname": "checkout_url", "label": "Checkout URL", "fieldtype": "Small Text"},
+  {"fieldname": "entitlement", "label": "Entitlement", "fieldtype": "Link", "options": "Commerce Entitlement"},
+  {"fieldname": "refunded_amount", "label": "Refunded Amount", "fieldtype": "Currency", "options": "currency", "precision": "2", "default": "0"},
+  {"fieldname": "charged_back_amount", "label": "Charged Back Amount", "fieldtype": "Currency", "options": "currency", "precision": "2", "default": "0"},
+  {"fieldname": "access_revoked", "label": "Payment Access Revoked", "fieldtype": "Check", "default": "0"},
+  {"fieldname": "last_checked_on", "label": "Last Reconciled On", "fieldtype": "Datetime", "search_index": 1},
+  {"fieldname": "customer_reference", "label": "Opaque Customer Reference", "fieldtype": "Data", "hidden": 1},
+  {"fieldname": "quote_token", "label": "Quote Version", "fieldtype": "Data", "hidden": 1},
+  {"fieldname": "terms_url", "label": "Accepted Terms URL", "fieldtype": "Small Text"},
+  {"fieldname": "accepted_on", "label": "Accepted On", "fieldtype": "Datetime"},
+  {"fieldname": "redirect_url", "label": "Return URL", "fieldtype": "Small Text"},
+  {"fieldname": "request_fingerprint", "label": "Request Fingerprint", "fieldtype": "Data", "hidden": 1},
+  {"fieldname": "open_order_key", "label": "Open Order Key", "fieldtype": "Data", "unique": 1, "hidden": 1},
+  {"fieldname": "payment_key", "label": "Account Payment Key", "fieldtype": "Data", "unique": 1, "hidden": 1}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "report": 1, "export": 1},
+  {"role": "Commerce Manager", "read": 1, "report": 1, "export": 1},
+  {"role": "Commerce Viewer", "read": 1, "report": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}

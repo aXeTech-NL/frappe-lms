@@ -141,7 +141,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Source Type",
-   "options": "Manual",
+   "options": "Manual\nPurchase",
    "read_only": 1,
    "reqd": 1
   },
@@ -158,7 +158,7 @@
    "options": "source_doctype"
   },
   {
-   "description": "Optional caller key for idempotent manual grants.",
+   "description": "Caller key for idempotent grants. Purchase keys are controlled by the checkout service.",
    "fieldname": "idempotency_key",
    "fieldtype": "Data",
    "label": "Idempotency Key",

@@ -131,7 +131,7 @@
    "label": "Badge Label"
   },
   {
-   "description": "Optional relative or HTTPS purchase URL. The catalog shows an unavailable state when empty.",
+   "description": "Optional external purchase URL when integrated checkout is off. Enabled Commerce checkout uses the native LMS checkout route for eligible EUR courses.",
    "fieldname": "purchase_url",
    "fieldtype": "Data",
    "label": "Purchase URL"

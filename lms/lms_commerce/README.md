@@ -20,8 +20,8 @@ pagination, cards, course pages, navigation, teaching tools and learning records
 ## Configuration
 
 Open **Commerce management** from the LMS sidebar (requires Settings read access),
-or `/desk/commerce`. The four existing DocTypes are Commerce Settings, Commerce
-Tier, Commerce Offering and Commerce Entitlement.
+or `/desk/commerce`. The DocTypes are Commerce Settings, Commerce Tier, Commerce
+Offering, Commerce Entitlement and the read-only Commerce Order payment audit.
 
 With Enabled off, or no enabled Offering for a course, native behavior is retained.
 With Enabled on, a mapped course can be Free, Tier, Purchase, or Tier or Purchase.
@@ -50,12 +50,20 @@ The distinct module name prevents collisions with the legacy `Commerce` namespac
 No monkey patches, copied native course components or dynamic sibling mounts are
 required. Build the normal LMS frontend with Bench.
 
-## Not implemented by this restructuring
+## One-time checkout
 
-Checkout, payment fulfillment, recurring subscriptions, Mollie integration,
-refunds and business seats remain separate work. The personal access page does
-not pretend that manual tier grants are billed subscriptions. Missing purchase or
-upgrade URLs display an unavailable action, never a fictional checkout.
+[Checkout setup, safety and recovery](CHECKOUT.md) describes native EUR course
+checkout through `payments.checkout` and the separate Payments Mollie adapter.
+Checkout and live payments default to disabled. Confirmed payments create an
+order-scoped Purchase grant, without replacing native enrollment or eligibility.
+Only provider-verified state fulfills; browser returns never do.
+
+## Not implemented
+
+Recurring subscriptions, refund initiation, invoices/tax calculation and business
+seats remain separate work. The personal access page does not pretend that manual
+tier grants are billed subscriptions. With checkout disabled, missing purchase or
+upgrade URLs still display an unavailable action rather than a fictional checkout.
 
 Program/Batch commercial enforcement is not implemented; independent native batch
 assessment access remains valid. Historical public media/SCORM and external video

@@ -74,6 +74,7 @@ after_install = ["lms.install.after_install", "lms.lms_commerce.install.after_sy
 after_sync = ["lms.install.after_sync", "lms.lms_commerce.install.after_sync"]
 before_migrate = "lms.lms_commerce.install.before_migrate"
 lms_course_access_policy = ["lms.lms_commerce.integrations.lms.course_access_policy"]
+checkout_payment_updated = ["lms.lms_commerce.services.checkout.payment_updated"]
 before_uninstall = "lms.install.before_uninstall"
 setup_wizard_complete = "lms.demo.demo_data.create_demo_data"
 after_migrate = [
@@ -227,6 +228,7 @@ scheduler_events = {
 		"lms.lms.doctype.lms_live_class.lms_live_class.retry_pending_invites",
 	],
 	"hourly": [
+		"lms.lms_commerce.services.checkout.reconcile_orders",
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.schedule_evals",
 		"lms.lms.doctype.lms_course.lms_course.update_course_statistics",
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.mark_eval_as_completed",

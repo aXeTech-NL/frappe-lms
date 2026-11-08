@@ -7,6 +7,11 @@
   "enabled",
   "default_currency",
   "portal_path",
+  "checkout_section",
+  "checkout_enabled",
+  "payment_gateway",
+  "terms_url",
+  "allow_live_payments",
   "integration_section",
   "contract_version",
   "provider_path"
@@ -33,6 +38,37 @@
    "fieldtype": "Data",
    "label": "Learning Portal",
    "reqd": 1
+  },
+  {
+   "fieldname": "checkout_section",
+   "fieldtype": "Section Break",
+   "label": "One-time Checkout"
+  },
+  {
+   "fieldname": "checkout_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Checkout",
+   "default": "0",
+   "description": "One-time EUR course purchases through Payments. Does not activate subscriptions. Requires an HTTPS host_name and published checkout terms."
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Link",
+   "options": "Payment Gateway",
+   "label": "Checkout Payment Gateway"
+  },
+  {
+   "fieldname": "terms_url",
+   "fieldtype": "Data",
+   "label": "Checkout Terms URL",
+   "description": "Published, versioned terms covering the total price, access and consumer rights. No tax or invoice engine is provided by checkout."
+  },
+  {
+   "fieldname": "allow_live_payments",
+   "fieldtype": "Check",
+   "label": "Allow Live Payments",
+   "default": "0",
+   "description": "Requires an explicit operational go-live decision. Keep off during development. Only a System Manager may change this field."
   },
   {
    "fieldname": "integration_section",

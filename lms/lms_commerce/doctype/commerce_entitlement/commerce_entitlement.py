@@ -52,8 +52,35 @@ class CommerceEntitlement(Document):
 			self.status = "Expired"
 
 	def validate_source(self):
-		if self.source_type != "Manual":
-			frappe.throw(_("Only Manual entitlement sources are supported in this milestone."))
+		if self.source_type == "Purchase":
+			from lms.lms_commerce.doctype.commerce_order.commerce_order import CHECKOUT_WRITE
+
+			if self.flags.get("checkout_write") is not CHECKOUT_WRITE:
+				frappe.throw(
+					_("Purchase entitlements are managed by the checkout service."), frappe.PermissionError
+				)
+			order = (
+				frappe.db.get_value(
+					"Commerce Order",
+					self.source_name,
+					["member", "course", "status", "access_revoked"],
+					as_dict=True,
+				)
+				if self.source_doctype == "Commerce Order"
+				else None
+			)
+			if (
+				not order
+				or order.member != self.member
+				or self.scope != "Target"
+				or self.target_doctype != "LMS Course"
+				or order.course != self.target_name
+				or order.status not in ("paid", "partially_refunded")
+				or order.access_revoked
+			):
+				frappe.throw(_("A matching paid order is required for purchase access."))
+		elif self.source_type != "Manual":
+			frappe.throw(_("Unsupported entitlement source."))
 		if bool(self.source_doctype) != bool(self.source_name):
 			frappe.throw(_("Source Type and Source Document must be provided together."))
 		if self.source_doctype and not frappe.db.exists(self.source_doctype, self.source_name):
@@ -116,7 +143,16 @@ class CommerceEntitlement(Document):
 			self.active_grant_key = None
 			return
 		identity = self.target_key if self.scope == "Target" else f"Commerce Tier:{self.tier}"
-		self.active_grant_key = f"{self.member}:{self.scope}:{identity}"
+		# A purchase owns its own grant. Refunding it must never revoke a separate
+		# manual grant, another purchase, or a tier entitlement.
+		if self.source_type == "Purchase":
+			self.active_grant_key = f"purchase:{self.source_name}"
+		else:
+			self.active_grant_key = f"{self.member}:{self.scope}:{identity}"
+
+	def on_trash(self):
+		if self.source_type == "Purchase" and not frappe.flags.in_test:
+			frappe.throw(_("Purchase audit records cannot be deleted."), frappe.PermissionError)
 
 	def is_current(self, at=None) -> bool:
 		return self.status == "Active" and is_active_window(self.starts_on, self.ends_on, at=at)

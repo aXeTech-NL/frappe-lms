@@ -4,7 +4,13 @@ import frappe
 from frappe import _
 
 MODULE = "LMS Commerce"
-DOCTYPES = ("Commerce Settings", "Commerce Tier", "Commerce Offering", "Commerce Entitlement")
+DOCTYPES = (
+	"Commerce Settings",
+	"Commerce Tier",
+	"Commerce Offering",
+	"Commerce Entitlement",
+	"Commerce Order",
+)
 LMS_POLICY_PROVIDER = "lms.lms_commerce.integrations.lms.course_access_policy"
 
 

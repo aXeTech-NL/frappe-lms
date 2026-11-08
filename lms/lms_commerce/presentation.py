@@ -1,5 +1,7 @@
 """Enrich native LMS responses; never fetch or replace the native course list."""
 
+from urllib.parse import quote
+
 import frappe
 from frappe import _
 from frappe.utils import fmt_money
@@ -32,9 +34,10 @@ def _decorate_page(courses):
 		for row in frappe.get_all(
 			"Commerce Offering",
 			filters={"enabled": 1, "target_doctype": "LMS Course", "target_name": ["in", names]},
-			fields=["target_name", "access_policy", "required_tier", "amount", "currency"],
+			fields=["name", "target_name", "access_policy", "required_tier", "amount", "currency"],
 		)
 	}
+	checkout_enabled = frappe.db.get_single_value("Commerce Settings", "checkout_enabled")
 	for course in courses:
 		decision = decisions[course.name]
 		if not decision["handled"]:
@@ -47,6 +50,28 @@ def _decorate_page(courses):
 		if not access["allowed"] and can_author_course(course.name, user=frappe.session.user):
 			access.update(allowed=True, reason="staff_access", offers=[])
 		price = prices.get(course.name)
+		if (
+			checkout_enabled
+			and price
+			and not access["allowed"]
+			and frappe.session.user != "Guest"
+			and price.access_policy in {"Purchase", "Tier or Purchase"}
+			and price.currency == "EUR"
+			and not any(course.get(field) for field in ("paid_course", "upcoming", "disable_self_learning"))
+		):
+			from lms.hooks import get_lms_path
+
+			access["offers"] = [offer for offer in access["offers"] if offer["kind"] != "purchase"]
+			access["offers"].insert(
+				0,
+				{
+					"kind": "purchase",
+					"label": _("Buy for {0}").format(fmt_money(price.amount, currency=price.currency)),
+					"url": f"/{get_lms_path().strip('/')}/checkout/{quote(price.name, safe='')}",
+					"variant": "solid",
+					"icon": "credit-card",
+				},
+			)
 		access["price_label"] = _price_label(price) if price else _("Access managed by Commerce")
 		course["commerce"] = access
 
