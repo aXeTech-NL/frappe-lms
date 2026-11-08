@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     name: Build
+    # Helder builds and promotes its own image from helder-leerplatform.
+    # This upstream recipe fetches frappe/lms and must not publish fork tags.
+    if: github.repository == 'frappe/lms'
     runs-on: ubuntu-latest
 
     strategy:
