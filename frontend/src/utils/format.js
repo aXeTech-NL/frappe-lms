@@ -1,8 +1,56 @@
 import { useTimeAgo } from '@vueuse/core'
-import { serverTime } from '@/utils/dayjs'
+import dayjs, { serverTime } from '@/utils/dayjs'
 
 export function timeAgo(date) {
-	return useTimeAgo(serverTime(date).toDate()).value
+	const value = serverTime(date)
+	if (dayjs.locale() === 'nl') return value.fromNow()
+	return useTimeAgo(value.toDate()).value
+}
+
+export function formatTime(timeString) {
+	if (!timeString) return ''
+	const [hour, minute] = timeString.split(':').map(Number)
+	const dummyDate = new Date(0, 0, 0, hour, minute)
+	return new Intl.DateTimeFormat(
+		dayjs.locale() === 'nl' ? 'nl-NL' : 'en-US',
+		{
+			hour: 'numeric',
+			minute: 'numeric',
+			hour12: dayjs.locale() !== 'nl',
+		}
+	).format(dummyDate)
+}
+
+export function formatNumber(number) {
+	return number.toLocaleString(dayjs.locale() === 'nl' ? 'nl-NL' : 'en-IN', {
+		maximumFractionDigits: 0,
+	})
+}
+
+export function formatNumberIntoCurrency(number, currency) {
+	if (number) {
+		return number.toLocaleString(dayjs.locale() === 'nl' ? 'nl-NL' : 'en-IN', {
+			maximumFractionDigits: 0,
+			style: 'currency',
+			currency: currency,
+		})
+	}
+	return ''
+}
+
+export function formatAmount(amount) {
+	if (amount > 999) {
+		const compact = (amount / 1000).toFixed(1)
+		return (dayjs.locale() === 'nl' ? compact.replace('.', ',') : compact) + 'k'
+	}
+	return amount
+}
+
+export function formatRating(value) {
+	const n = Number(value)
+	if (!isFinite(n)) return ''
+	const rating = (Math.round(n * 10) / 10).toString()
+	return dayjs.locale() === 'nl' ? rating.replace('.', ',') : rating
 }
 
 // Map the site's System Settings date_format (boot data) to dayjs tokens.

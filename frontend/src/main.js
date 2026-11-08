@@ -5,7 +5,7 @@ import App from './App.vue'
 import { createPinia } from 'pinia'
 import dayjs from '@/utils/dayjs'
 import { createDialog } from '@/utils/dialogs'
-import translationPlugin from './translation'
+import translationPlugin, { loadTranslations } from './translation'
 import { usersStore } from './stores/user'
 import { initSocket } from './socket'
 import { FrappeUI, setConfig, frappeRequest } from 'frappe-ui'
@@ -24,7 +24,6 @@ app.use(translationPlugin)
 registerDirectives(app)
 app.provide('$dayjs', dayjs)
 app.provide('$socket', initSocket())
-app.mount('#app')
 
 const { userResource, allUsers } = usersStore()
 app.provide('$user', userResource)
@@ -40,3 +39,9 @@ watch(userResource, () => {
 
 app.config.globalProperties.$user = userResource
 app.config.globalProperties.$dialog = createDialog
+
+// Setup-time labels must see the translations on the very first render.
+// Keep the app usable with English fallbacks if the request fails.
+loadTranslations()
+	.catch(() => {})
+	.finally(() => app.mount('#app'))

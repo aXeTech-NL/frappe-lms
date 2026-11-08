@@ -37,51 +37,12 @@ export {
 	formatSeconds,
 	escapeHTML,
 	formatTimestamp,
+	formatTime,
+	formatNumber,
+	formatNumberIntoCurrency,
+	formatAmount,
+	formatRating,
 } from '@/utils/format'
-
-export function formatTime(timeString) {
-	if (!timeString) return ''
-	const [hour, minute] = timeString.split(':').map(Number)
-	const dummyDate = new Date(0, 0, 0, hour, minute)
-	const formattedTime = new Intl.DateTimeFormat('en-US', {
-		hour: 'numeric',
-		minute: 'numeric',
-		hour12: true,
-	}).format(dummyDate)
-	return formattedTime
-}
-
-export function formatNumber(number) {
-	return number.toLocaleString('en-IN', {
-		maximumFractionDigits: 0,
-	})
-}
-
-export function formatNumberIntoCurrency(number, currency) {
-	if (number) {
-		return number.toLocaleString('en-IN', {
-			maximumFractionDigits: 0,
-			style: 'currency',
-			currency: currency,
-		})
-	}
-	return ''
-}
-
-// create a function that formats numbers in thousands to k
-
-export function formatAmount(amount) {
-	if (amount > 999) {
-		return (amount / 1000).toFixed(1) + 'k'
-	}
-	return amount
-}
-
-export function formatRating(value) {
-	const n = Number(value)
-	if (!isFinite(n)) return ''
-	return (Math.round(n * 10) / 10).toString()
-}
 
 export function convertToTitleCase(str) {
 	if (!str) {

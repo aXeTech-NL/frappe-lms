@@ -11,6 +11,7 @@ import 'dayjs/esm/locale/ar'
 import 'dayjs/esm/locale/he'
 import 'dayjs/esm/locale/fa'
 import 'dayjs/esm/locale/ur'
+import 'dayjs/esm/locale/nl'
 
 dayjs.extend(updateLocale)
 dayjs.extend(relativeTime)
@@ -21,11 +22,13 @@ dayjs.extend(isSameOrAfter)
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
+const language = (window.lang || 'en').replace('_', '-').split('-')[0]
 if (
-	document.documentElement.dir === 'rtl' &&
-	['ar', 'he', 'fa', 'ur'].includes(window.lang)
+	language === 'nl' ||
+	(document.documentElement.dir === 'rtl' &&
+		['ar', 'he', 'fa', 'ur'].includes(language))
 ) {
-	dayjs.locale(window.lang)
+	dayjs.locale(language)
 }
 
 // Server datetimes are naive and in the site's timezone, not the browser's.

@@ -12,6 +12,8 @@ recursive-include lms *.js
 recursive-include lms *.json
 recursive-include lms *.md
 recursive-include lms *.png
+recursive-include lms *.po
+recursive-include lms *.pot
 recursive-include lms *.py
 recursive-include lms *.svg
 recursive-include lms *.txt

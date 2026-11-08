@@ -17,7 +17,7 @@ from frappe.integrations.frappe_providers.frappecloud_billing import (
 	current_site_info,
 	is_fc_site,
 )
-from frappe.translate import get_all_translations
+from frappe.translate import get_all_translations, get_user_lang
 from frappe.utils import (
 	add_days,
 	cint,
@@ -175,11 +175,9 @@ def _doctype_permissions():
 
 @frappe.whitelist(allow_guest=True)
 def get_translations():
-	if frappe.session.user != "Guest":
-		language = frappe.db.get_value("User", frappe.session.user, "language")
-	else:
-		language = frappe.db.get_single_value("System Settings", "language")
-	return get_all_translations(language)
+	# Match the LMS shell's boot language, including the system-language
+	# fallback for accounts without a personal language preference.
+	return get_all_translations(get_user_lang())
 
 
 @frappe.whitelist()
