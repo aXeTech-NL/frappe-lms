@@ -1,24 +1,46 @@
-export function commerceLinks(settings: Record<string, unknown> | null | undefined, user: unknown) {
+export function commerceLinks(
+	settings: Record<string, unknown> | null | undefined,
+	user: unknown,
+) {
 	const items = []
 	if (settings?.commerce_enabled && user) {
-		items.push({ label: 'My access', icon: 'KeyRound', to: 'CommerceAccess', activeFor: ['CommerceAccess'] })
+		items.push({
+			label: 'My access',
+			icon: 'KeyRound',
+			to: 'CommerceAccess',
+			activeFor: ['CommerceAccess', 'CommerceTiers'],
+		})
 	}
 	if (settings?.can_manage_commerce && user) {
-		items.push({ label: 'Commerce management', icon: 'CreditCard', to: 'desk/commerce', activeFor: [] })
+		items.push({
+			label: 'Commerce management',
+			icon: 'CreditCard',
+			to: 'desk/commerce',
+			activeFor: [],
+		})
 	}
 	return { label: 'Commerce', hideLabel: true, items }
 }
 
-export const commerceRoutes = [{
-	path: '/access',
-	name: 'CommerceAccess',
-	component: () => import('./MyAccess.vue'),
-}, {
-	path: '/checkout/return/:order',
-	name: 'CommerceCheckoutReturn',
-	component: () => import('./CheckoutReturn.vue'),
-}, {
-	path: '/checkout/:offering',
-	name: 'CommerceCheckout',
-	component: () => import('./Checkout.vue'),
-}]
+export const commerceRoutes = [
+	{
+		path: '/access',
+		name: 'CommerceAccess',
+		component: () => import('./MyAccess.vue'),
+	},
+	{
+		path: '/access/tiers',
+		name: 'CommerceTiers',
+		component: () => import('./TierSelection.vue'),
+	},
+	{
+		path: '/checkout/return/:order',
+		name: 'CommerceCheckoutReturn',
+		component: () => import('./CheckoutReturn.vue'),
+	},
+	{
+		path: '/checkout/:offering',
+		name: 'CommerceCheckout',
+		component: () => import('./Checkout.vue'),
+	},
+]

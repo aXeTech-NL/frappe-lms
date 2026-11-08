@@ -37,7 +37,7 @@ describe('internal Commerce UI', () => {
 		expect(commerceLinks({ commerce_enabled: true }, null).items).toEqual([])
 		expect(commerceLinks({ commerce_enabled: true }, {}).items[0].to).toBe('CommerceAccess')
 		expect(commerceLinks({ can_manage_commerce: true }, {}).items[0].to).toBe('desk/commerce')
-		expect(commerceRoutes.map(route => route.path)).toEqual(['/access', '/checkout/return/:order', '/checkout/:offering'])
+		expect(commerceRoutes.map(route => route.path)).toEqual(['/access', '/access/tiers', '/checkout/return/:order', '/checkout/:offering'])
 	})
 	it('enriches the actual native CourseCard rather than a replacement card', () => {
 		const wrapper = mount(CourseCard, {

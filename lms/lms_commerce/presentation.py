@@ -51,6 +51,26 @@ def _decorate_page(courses):
 			access.update(allowed=True, reason="staff_access", offers=[])
 		price = prices.get(course.name)
 		if (
+			price
+			and not access["allowed"]
+			and frappe.session.user != "Guest"
+			and price.access_policy in {"Tier", "Tier or Purchase"}
+			and not any(offer["kind"] == "upgrade" for offer in access["offers"])
+		):
+			from lms.hooks import get_lms_path
+
+			# Choosing a tier remains available while billing is off. This route
+			# compares access levels; it is not a payment or an entitlement grant.
+			access["offers"].append(
+				{
+					"kind": "upgrade",
+					"label": _("Compare tiers"),
+					"url": f"/{get_lms_path().strip('/')}/access/tiers?course={quote(course.name, safe='')}",
+					"variant": "outline",
+					"icon": "layers",
+				}
+			)
+		if (
 			checkout_enabled
 			and price
 			and not access["allowed"]
