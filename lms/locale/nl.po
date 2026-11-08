@@ -177,7 +177,7 @@ msgstr ""
 
 #: frontend/src/pages/ProfileEvaluator.vue:100
 msgid "Access"
-msgstr ""
+msgstr "Toegang"
 
 #: frontend/src/pages/ProfileRoles.vue:20
 msgid "Access courses, join batches, and track learning progress"
@@ -12480,4 +12480,76 @@ msgstr "Bestelling"
 
 msgid "Check payment status"
 msgstr "Betaalstatus controleren"
+
+msgid "Your learning environment"
+msgstr "Uw leeromgeving"
+
+msgid "Your next step starts here."
+msgstr "Uw volgende stap begint hier."
+
+msgid "Review your course and complete payment. You can then continue learning here."
+msgstr "Controleer uw cursus en rond de betaling af. Daarna kunt u hier verder leren."
+
+msgid "Checkout progress"
+msgstr "Voortgang van uw bestelling"
+
+msgid "Review order"
+msgstr "Controleren"
+
+msgid "Your order"
+msgstr "Uw bestelling"
+
+msgid "One-time purchase"
+msgstr "Eenmalige aankoop"
+
+msgid "No subscription or automatic debit"
+msgstr "Geen abonnement of automatische incasso"
+
+msgid "Access after payment confirmation"
+msgstr "Toegang na bevestiging van uw betaling"
+
+msgid "Continue learning in this environment"
+msgstr "Verder leren in deze leeromgeving"
+
+msgid "You complete payment with our payment provider, then return here."
+msgstr "U rondt de betaling af bij onze betaalprovider. Daarna keert u hier terug."
+
+msgid "Review your purchase"
+msgstr "Controleer uw aankoop"
+
+msgid "You already have an open checkout for this course. Continue that checkout to avoid paying twice."
+msgstr "Er staat al een bestelling voor deze cursus open. Ga daarmee verder om dubbel betalen te voorkomen."
+
+msgid "Back to courses"
+msgstr "Terug naar cursussen"
+
+msgid "Your payment status and next step, together in your learning environment."
+msgstr "Uw betaalstatus en volgende stap, samen in uw leeromgeving."
+
+msgid "Ready to keep learning."
+msgstr "Klaar om verder te leren."
+
+msgid "Payment confirmed"
+msgstr "Betaling bevestigd"
+
+msgid "Go to course"
+msgstr "Naar de cursus"
+
+msgid "Payment not completed."
+msgstr "Betaling niet afgerond."
+
+msgid "No access granted"
+msgstr "Geen toegang verleend"
+
+msgid "Payment reversed."
+msgstr "Betaling teruggedraaid."
+
+msgid "Access from this order withdrawn"
+msgstr "Toegang via deze bestelling ingetrokken"
+
+msgid "We are checking your payment."
+msgstr "We controleren uw betaling."
+
+msgid "Awaiting confirmation"
+msgstr "In afwachting van bevestiging"
 
