@@ -101,7 +101,7 @@ const OTHER = [
 
 // Mounted the way a cold deep link mounts it: through the router, into a bare
 // RouterView, with no MobileLayout anywhere above.
-const openYou = async () => {
+const openYou = async (translate = (text: string) => text) => {
 	const router = createRouter({
 		history: createMemoryHistory(),
 		routes: [
@@ -117,7 +117,7 @@ const openYou = async () => {
 	const wrapper = mount(RouterView, {
 		global: {
 			plugins: [router],
-			mocks: { __: (text: string) => text },
+			mocks: { __: translate },
 			stubs: { teleport: true },
 		},
 	})
@@ -187,6 +187,18 @@ describe('a cold deep link to /you', () => {
 })
 
 describe('what the page shows', () => {
+	it('translates the current colour mode as well as the menu label', async () => {
+		const messages: Record<string, string> = {
+			'Colour mode': 'Kleurmodus', System: 'Systeem', 'Log out': 'Uitloggen',
+		}
+		themePreference.value = 'system'
+		const { wrapper } = await openYou((text) => messages[text] || text)
+		expect(rowLabelled(wrapper, 'Kleurmodus')?.text()).toContain('Systeem')
+		expect(rowLabelled(wrapper, 'Uitloggen')).toBeDefined()
+		// Authored profile text is not passed through the catalog.
+		expect(wrapper.text()).toContain('Raiza Safeel')
+	})
+
 	it('leaves out the destinations already on the bottom bar', async () => {
 		const { wrapper } = await openYou()
 		for (const primary of ['Home', 'Courses', 'Batches']) {

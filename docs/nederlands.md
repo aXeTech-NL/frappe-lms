@@ -11,6 +11,12 @@ geen afzonderlijke Nederlandse app, catalogus of runtimepatch nodig.
 - De belangrijkste navigatietermen zijn gecorrigeerd: **Cursussen**,
   **Lesgroepen**, **Leertrajecten**, **Toetsen**, **Cursisten**, **Docenten** en
   **Instellingen**.
+- Het gebruikersmenu vertaalt ook **Mijn profiel**, **Instellingen**,
+  **Uitloggen** en de beheeracties. Gedeelde navigatie- en instellingenregisters
+  hebben eigen cataloguscontroles: deze teksten staan niet als letterlijke
+  tekst in een `__()`-aanroep en worden daardoor niet altijd geëxtraheerd.
+  Instellingenkoppen, keuzelijsten en de mobiele kleurmodus worden bij weergave
+  vertaald; opgeslagen waarden, routes en rechten blijven ongewijzigd.
 - Maand- en dagnamen, relatieve tijden, 24-uursnotatie en de bestaande
   getal-/waarderingsformatters ondersteunen Nederlands. De bestaande afronding
   en de standaardweergave voor andere talen veranderen niet.
@@ -26,6 +32,17 @@ andere apps en externe diensten blijven afhankelijk van hun eigen vertalingen.
 Ook bestaande upstream-vertalingen kunnen nog redactionele verbeteringen nodig
 hebben; een gevuld taalbestand is geen garantie dat elk dynamisch schermlabel
 of elke toekomstige toevoeging vertaald is.
+
+## Aanspreekvorm
+
+Alle Nederlandse interfaceteksten gebruiken informeel **jij/je/jou/jouw**, niet
+u/uw. Dit geldt ook voor meldingen, standaard-e-mails, checkout en de keuze van
+het toegangsniveau. Gebruik doorgaans *je*, en *jij*, *jou* of *jouw* waar nadruk
+of de zinsbouw daarom vraagt. Pas ook de grammatica aan: *Waar heb je …?*,
+*Je kunt je inschrijven* en *Daarna keer je terug*.
+
+De catalogustests bewaken deze afspraak voor alle vertalingen. Eigen lesinhoud,
+namen en eerder opgeslagen e-mailsjablonen worden niet automatisch herschreven.
 
 ## Nederlands kiezen
 
@@ -75,13 +92,14 @@ Vanuit de repository, met Babel beschikbaar:
 ```sh
 python -m unittest lms.tests.test_dutch_translations -v
 cd frontend
-yarn test src/tests/translation.test.ts src/tests/dutchLocale.test.ts
+yarn test src/tests/translation.test.ts src/tests/dutchLocale.test.ts src/tests/userDropdownTheme.test.ts src/tests/SettingFields.test.ts src/tests/mobileYou.test.ts
 ```
 
 Zonder bestaande Python-omgeving kan de eerste opdracht met
 `uv run --no-project --with babel python -m unittest lms.tests.test_dutch_translations -v`.
 
-De catalogustests controleren dekking van `main.pot`, lege/fuzzy vertalingen,
+De catalogustests controleren dekking van `main.pot` én gedeelde navigatie- en
+instellingenregisters, informele aanspreekvorm, lege/fuzzy vertalingen,
 interpolatievariabelen, e-mailsjabloonvariabelen en compilatie naar een bruikbare
 gettext-catalogus. Frontendtests controleren de eerste render, gedeelde
 verzoeken, foutafhandeling, Engelse terugval en Nederlandse datums/getallen.

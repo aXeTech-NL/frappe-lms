@@ -10,7 +10,7 @@
 				class="text-p-base-semibold text-ink-gray-8 mb-1"
 				:class="{ 'mt-6': index > 0 }"
 			>
-				{{ section.label }}
+				{{ __(section.label) }}
 			</div>
 			<template
 				v-for="(column, columnIndex) in section.columns"
@@ -104,7 +104,7 @@
 							v-model="data[field.name]"
 							:required="field.reqd"
 							:aria-label="__(field.label)"
-							:placeholder="field.placeholder || __(field.label)"
+							:placeholder="__(field.placeholder || field.label)"
 						/>
 						<div
 							v-if="field.description"
@@ -140,7 +140,7 @@
 							<Select
 								v-else-if="field.type == 'select'"
 								v-model="data[field.name]"
-								:options="field.options"
+								:options="translatedOptions(field.options)"
 								:aria-label="__(field.label)"
 								class="w-48"
 							/>
@@ -153,7 +153,7 @@
 								:required="field.reqd"
 								class="w-48"
 								:aria-label="__(field.label)"
-								:placeholder="field.placeholder || __(field.label)"
+								:placeholder="__(field.placeholder || field.label)"
 							/>
 						</div>
 					</div>
@@ -181,6 +181,14 @@ import { safeUrl } from '@/utils/safeUrl'
 // `public: true` may be world-readable; everything else keeps frappe's private
 // default. Behind a helper the privacy ratchet in publicImageUploads.test.ts can
 // only see "computed" and would stop catching a flip to public.
+
+// Translate display labels only; saved option values and field names stay native.
+const translatedOptions = (options) =>
+	(options || []).map((option) =>
+		typeof option === 'string'
+			? { label: __(option), value: option }
+			: { ...option, label: __(option.label ?? option.value) }
+	)
 
 // Every `password` field is a secret, so all of them get Password's masked box
 // and reveal toggle rather than a bare type="password". Password takes no `type`

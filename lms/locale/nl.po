@@ -20,7 +20,7 @@ msgstr ""
 
 #: lms/templates/emails/assignment_submission.html:5
 msgid " Please evaluate and grade it."
-msgstr " Evalueer en beoordeel het alstublieft."
+msgstr " Evalueer en beoordeel het alsjeblieft."
 
 #: frontend/src/pages/Programs/ProgramEnrollment.vue:32
 msgid " designed as a learning path to guide your progress. You may take the courses in any order that suits you. "
@@ -36,7 +36,7 @@ msgstr " naar "
 
 #: frontend/src/pages/Home/Streak.vue:16
 msgid " you are on a"
-msgstr " u bent op een"
+msgstr " je bent op een"
 
 #: frontend/src/components/Settings/Mobile/SettingsRow.vue:95
 msgid "(opens in a new tab)"
@@ -83,7 +83,7 @@ msgstr "<a href=\"https://docs.frappe.io/learning\">Documentatie</a>"
 #: frontend/src/components/Settings/EmailTemplate/EmailTemplateEdit.vue:107
 #: frontend/src/pages/Forms/EmailTemplateForm.vue:128
 msgid "<p>Dear {{ member_name }},</p>\\n\\n<p>You have been enrolled in our upcoming batch {{ batch_name }}.</p>\\n\\n<p>Thanks,</p>\\n<p>Frappe Learning</p>"
-msgstr "<p>Beste {{ member_name }},</p>\\n\\n<p>U bent ingeschreven op onze aanstaande batch {{ batch_name }}.</p>\\n\\n<p>Bedankt,</p>\\n<p>Frappe Learning</p>"
+msgstr "<p>Beste {{ member_name }},</p>\\n\\n<p>Je bent ingeschreven voor onze aanstaande lesgroep {{ batch_name }}.</p>\\n\\n<p>Bedankt,</p>\\n<p>Frappe Learning</p>"
 
 #. Header text in the Learning Workspace
 #: lms/lms/workspace/learning/learning.json
@@ -335,7 +335,7 @@ msgstr "Voeg een programmeeroefening toe aan je les"
 
 #: frontend/src/components/AssessmentPlugin.vue:6
 msgid "Add a quiz to your lesson"
-msgstr "Voeg een quiz toe aan uw les"
+msgstr "Voeg een toets toe aan je les"
 
 #: frontend/src/components/Quiz/QuestionAnswers.vue:134
 msgid "Add accepted answer"
@@ -355,7 +355,7 @@ msgstr "Hoofdstuk toevoegen"
 
 #: frontend/src/components/Sidebar/AppSidebar.vue:548
 msgid "Add courses to your batch"
-msgstr "Cursussen aan uw batch toevoegen"
+msgstr "Cursussen aan je lesgroep toevoegen"
 
 #: frontend/src/components/Settings/Raven/MassRemovalConfirmDialog.vue:75
 msgid "Add members?"
@@ -677,7 +677,7 @@ msgstr "Verschijnt in de linker zijbalk. Aanbevolen grootte is 32x32 px in PNG o
 
 #: frontend/src/components/Settings/BrandSettings.vue:98
 msgid "Appears next to the title in your browser tab. Recommended size is 32x32 px in PNG or ICO"
-msgstr "Verschijnt naast de titel in uw browsertabblad. Aanbevolen grootte is 32x32 px in PNG of ICO"
+msgstr "Verschijnt naast de titel in je browsertabblad. Aanbevolen grootte is 32x32 px in PNG of ICO"
 
 #: frontend/src/components/Settings/Coupons/CouponDetails.vue:70
 msgid "Applicable For"
@@ -739,7 +739,7 @@ msgstr "Gearchiveerd"
 
 #: frontend/src/components/UpcomingEvaluations.vue:206
 msgid "Are you sure you want to cancel this evaluation? This action cannot be undone."
-msgstr "Weet u zeker dat u deze evaluatie wilt annuleren? Deze actie kan niet ongedaan worden gemaakt."
+msgstr "Weet je zeker dat je deze evaluatie wilt annuleren? Deze actie kan niet ongedaan worden gemaakt."
 
 #: frontend/src/components/Sidebar/UserDropdown.vue:294
 msgid "Are you sure you want to clear the demo data? This would delete the course \"A guide  to Frappe Learning\" along with all its associated data. This action cannot be undone."
@@ -751,11 +751,11 @@ msgstr "Weet je zeker dat je dit leertraject wilt verwijderen? Dit kan niet onge
 
 #: frontend/src/pages/Programs/ProgramEnrollment.vue:38
 msgid "Are you sure you want to enroll?"
-msgstr "Weet u zeker dat u zich wilt inschrijven?"
+msgstr "Weet je zeker dat je je wilt inschrijven?"
 
 #: frontend/src/components/Sidebar/UserDropdown.vue:237
 msgid "Are you sure you want to login to your Frappe Cloud dashboard?"
-msgstr "Weet u zeker dat u wilt inloggen op je Frappe Cloud dashboard?"
+msgstr "Weet je zeker dat je wilt inloggen op je Frappe Cloud-dashboard?"
 
 #: frontend/src/components/Quiz.vue:868
 msgid "Are you sure you want to submit the quiz?"
@@ -2021,7 +2021,7 @@ msgstr "Voltooi jouw inschrijving"
 
 #: lms/lms/doctype/lms_payment/lms_payment.py:144
 msgid "Complete Your Enrollment - Don't miss out!"
-msgstr "Voltooi uw inschrijving - Mis niets!"
+msgstr "Voltooi je inschrijving - Mis niets!"
 
 #: lms/lms/doctype/course_lesson/course_lesson.py:530
 msgid "Complete the previous lesson before marking this one as done."
@@ -2120,7 +2120,7 @@ msgstr "Stel certificering voor een cursus in."
 
 #: frontend/src/components/Settings/BrandSettings.vue:4
 msgid "Configure your Brand Name, Logo, and Favicon"
-msgstr "Stel uw merknaam, logo en favicon in"
+msgstr "Stel je merknaam, logo en favicon in"
 
 #: frontend/src/components/Sidebar/UserDropdown.vue:242
 #: frontend/src/components/Sidebar/UserDropdown.vue:299
@@ -2133,7 +2133,7 @@ msgstr "Annulering bevestigen?"
 
 #: frontend/src/pages/ProgrammingExercises/ProgrammingExercises.vue:186
 msgid "Confirm Your Action"
-msgstr "Bevestig uw actie"
+msgstr "Bevestig je actie"
 
 #: frontend/src/components/Sidebar/UserDropdown.vue:293
 msgid "Confirm clearing demo data?"
@@ -2141,7 +2141,7 @@ msgstr "Verwijderen van demogegevens bevestigen?"
 
 #: frontend/src/pages/Batches/BatchForm.vue:572
 msgid "Confirm your action to delete"
-msgstr "Bevestig uw actie om te verwijderen"
+msgstr "Bevestig je actie om te verwijderen"
 
 #. Label of the confirmation_email_sent (Check) field in DocType 'LMS Batch
 #. Enrollment'
@@ -2176,11 +2176,11 @@ msgstr "Contacteer ons URL"
 
 #: frontend/src/components/CourseCardOverlay.vue:67
 msgid "Contact the Administrator to enroll for this course"
-msgstr "Neem contact op met de beheerder om u voor deze cursus in te schrijven"
+msgstr "Neem contact op met de beheerder om je voor deze cursus in te schrijven"
 
 #: frontend/src/pages/Lesson.vue:82
 msgid "Contact the Administrator to enroll for this course."
-msgstr "Neem contact op met de beheerder om u voor deze cursus in te schrijven."
+msgstr "Neem contact op met de beheerder om je voor deze cursus in te schrijven."
 
 #. Label of the content (Text) field in DocType 'Course Lesson'
 #. Label of the content (Rating) field in DocType 'LMS Batch Feedback'
@@ -2660,7 +2660,7 @@ msgstr "Cursussen in dit leertraject"
 
 #: frontend/src/pages/Programs/ProgramDetail.vue:19
 msgid "Courses must be completed in order. You can only start the next course after completing the previous one."
-msgstr "Cursussen moeten in volgorde worden voltooid. U kunt pas aan de volgende cursus beginnen nadat u de vorige hebt voltooid."
+msgstr "Cursussen moeten in volgorde worden voltooid. Je kunt pas aan de volgende cursus beginnen nadat je de vorige hebt voltooid."
 
 #. Label of the cover_image (Attach Image) field in DocType 'User'
 #: lms/fixtures/custom_field.json
@@ -2732,11 +2732,11 @@ msgstr "Maak je eerste lesgroep"
 
 #: frontend/src/components/Sidebar/AppSidebar.vue:442
 msgid "Create your first course"
-msgstr "Maak uw eerste cursus aan"
+msgstr "Maak je eerste cursus aan"
 
 #: frontend/src/components/Sidebar/AppSidebar.vue:494
 msgid "Create your first quiz"
-msgstr "Maak uw eerste quiz"
+msgstr "Maak je eerste toets"
 
 #: frontend/src/components/Settings/Categories.vue:130
 #: frontend/src/pages/Courses/Courses.vue:335
@@ -3003,23 +3003,23 @@ msgstr "Toetsen verwijderen…"
 
 #: frontend/src/pages/Courses/CourseForm.vue:265
 msgid "Deleting the course will also delete all its chapters and lessons. Are you sure you want to delete this course?"
-msgstr "Als u de cursus verwijdert, worden ook alle hoofdstukken en lessen verwijderd. Weet u zeker dat u deze cursus wilt verwijderen?"
+msgstr "Als je de cursus verwijdert, worden ook alle hoofdstukken en lessen verwijderd. Weet je zeker dat je deze cursus wilt verwijderen?"
 
 #: frontend/src/pages/ProgrammingExercises/ProgrammingExercises.vue:187
 msgid "Deleting these exercises will permanently remove them from the system, along with all associated submissions. This action is irreversible. Are you sure you want to proceed?"
-msgstr "Als u deze oefeningen verwijdert, worden ze samen met alle bijbehorende inzendingen permanent uit het systeem verwijderd. Deze actie is onomkeerbaar. Weet u zeker dat u wilt doorgaan?"
+msgstr "Als je deze oefeningen verwijdert, worden ze samen met alle bijbehorende inzendingen permanent uit het systeem verwijderd. Deze actie is onomkeerbaar. Weet je zeker dat je wilt doorgaan?"
 
 #: frontend/src/pages/Batches/BatchForm.vue:573
 msgid "Deleting this batch will also delete all its data including enrolled students, linked courses, assessments, feedback and discussions. Are you sure you want to continue?"
-msgstr "Als u deze batch verwijdert, worden ook alle gegevens verwijderd, inclusief ingeschreven leerlingen, gekoppelde cursussen, beoordelingen, feedback en discussies. Weet u zeker dat u wilt doorgaan?"
+msgstr "Als je deze lesgroep verwijdert, worden ook alle gegevens verwijderd, inclusief ingeschreven cursisten, gekoppelde cursussen, beoordelingen, feedback en discussies. Weet je zeker dat je wilt doorgaan?"
 
 #: frontend/src/components/CourseOutline.vue:300
 msgid "Deleting this chapter will also delete all its lessons and permanently remove it from the course. This action cannot be undone. Are you sure you want to continue?"
-msgstr "Als u dit hoofdstuk verwijdert, worden ook alle lessen verwijderd en wordt het hoofdstuk permanent uit de cursus verwijderd. Deze actie kan niet ongedaan worden gemaakt. Weet u zeker dat u wilt doorgaan?"
+msgstr "Als je dit hoofdstuk verwijdert, worden ook alle lessen verwijderd en wordt het hoofdstuk permanent uit de cursus verwijderd. Deze actie kan niet ongedaan worden gemaakt. Weet je zeker dat je wilt doorgaan?"
 
 #: frontend/src/components/CourseOutline.vue:274
 msgid "Deleting this lesson will permanently remove it from the course. This action cannot be undone. Are you sure you want to continue?"
-msgstr "Als u dit hoofdstuk verwijdert, worden ook alle lessen verwijderd en wordt het hoofdstuk permanent uit de cursus verwijderd. Deze actie kan niet ongedaan worden gemaakt. Weet u zeker dat u wilt doorgaan?"
+msgstr "Als je deze les verwijdert, wordt deze permanent uit de cursus verwijderd. Deze actie kan niet ongedaan worden gemaakt. Weet je zeker dat je wilt doorgaan?"
 
 #: frontend/src/pages/Forms/QuizForm.vue:485
 msgid "Deleting this quiz permanently removes it and its submissions. This action cannot be undone. Are you sure you want to continue?"
@@ -3176,7 +3176,7 @@ msgstr "Soort document"
 
 #: lms/templates/emails/payment_reminder.html:11
 msgid "Don’t miss this opportunity to enhance your skills. Click below to complete your enrollment"
-msgstr "Mis deze kans om uw vaardigheden te verbeteren niet. Klik hieronder om uw inschrijving te voltooien"
+msgstr "Mis deze kans om je vaardigheden te verbeteren niet. Klik hieronder om je inschrijving te voltooien"
 
 #: frontend/src/pages/Forms/CourseImportForm.vue:26
 msgid "Drag and drop a ZIP file, or upload from your"
@@ -3441,7 +3441,7 @@ msgstr "Evaluaties inschakelen voor deelnemers aan de lesgroep."
 
 #: frontend/src/pages/Forms/ChapterForm.vue:23
 msgid "Enable this only if you want to upload a SCORM package as a chapter."
-msgstr "Schakel deze optie alleen in als u een SCORM-pakket als hoofdstuk wilt uploaden."
+msgstr "Schakel deze optie alleen in als je een SCORM-pakket als hoofdstuk wilt uploaden."
 
 #: frontend/src/components/Settings/ZoomSettings.vue:104
 msgid "Enable {0}"
@@ -3468,7 +3468,7 @@ msgstr "Ingeschakeld"
 
 #: frontend/src/pages/Forms/BulkCertificatesForm.vue:46
 msgid "Enabling this will publish the certificate on the certified participants page."
-msgstr "Als u deze optie inschakelt, wordt het certificaat gepubliceerd op de pagina met gecertificeerde deelnemers."
+msgstr "Als je deze optie inschakelt, wordt het certificaat gepubliceerd op de pagina met gecertificeerde deelnemers."
 
 #. Label of the end_date (Date) field in DocType 'LMS Batch'
 #: frontend/src/pages/Forms/NewBatchForm.vue:26
@@ -4080,7 +4080,7 @@ msgstr "Terugkoppeling"
 
 #: frontend/src/components/Assignment.vue:84
 msgid "Feel free to make edits to your submission if needed."
-msgstr "U kunt uw inzending naar behoefte bewerken."
+msgstr "Je kunt je inzending naar behoefte bewerken."
 
 #. Label of the field_to_check (Select) field in DocType 'LMS Badge'
 #: lms/lms/doctype/lms_badge/lms_badge.json
@@ -4551,7 +4551,7 @@ msgstr "Help anderen iets nieuws te leren door een cursus te maken."
 
 #: frontend/src/pages/Batches/components/BatchFeedback.vue:40
 msgid "Help us improve by providing your feedback."
-msgstr "Help ons te verbeteren door uw feedback te geven."
+msgstr "Help ons te verbeteren door je feedback te geven."
 
 #: lms/templates/emails/published_batch_notification.html:7
 #: lms/templates/emails/published_course_notification.html:7
@@ -4645,7 +4645,7 @@ msgstr "Ik werk hier momenteel"
 
 #: lms/templates/emails/certification.html:6
 msgid "I am delighted to inform you that you have successfully earned your certification for the {0} course. Congratulations!"
-msgstr "Het verheugt mij u te kunnen meedelen dat u met succes uw certificering voor de cursus {0} hebt behaald. Gefeliciteerd!"
+msgstr "Ik ben blij je te kunnen laten weten dat je het certificaat voor de cursus {0} hebt behaald. Gefeliciteerd!"
 
 #: frontend/src/pages/ProfileAbout.vue:150
 msgid "I am happy to announce that I earned the {0} badge on {1} at {2}"
@@ -4668,29 +4668,29 @@ msgstr "Identificeer gebruikerscategorie"
 
 #: lms/templates/emails/mentor_request_creation_email.html:5
 msgid "If you are not any more interested to mentor the course"
-msgstr "Als u geen interesse meer hebt om de cursus te begeleiden"
+msgstr "Als je geen interesse meer hebt om de cursus te begeleiden"
 
 #: lms/templates/emails/payment_reminder.html:19
 msgid "If you have any questions or need assistance, feel free to reach out to our support team."
-msgstr "Als u vragen heeft of hulp nodig heeft, kunt u gerust contact opnemen met ons supportteam."
+msgstr "Als je vragen hebt of hulp nodig hebt, kun je gerust contact opnemen met ons supportteam."
 
 #: lms/templates/emails/batch_confirmation.html:29
 #: lms/templates/emails/batch_start_reminder.html:27
 #: lms/templates/emails/batch_start_reminder_recorded.html:30
 #: lms/templates/emails/live_class_reminder.html:24
 msgid "If you have any questions or require assistance, feel free to contact us."
-msgstr "Als u vragen hebt of hulp nodig hebt, neem dan gerust contact met ons op."
+msgstr "Als je vragen hebt of hulp nodig hebt, neem dan gerust contact met ons op."
 
 #. Description of the 'Amount (USD)' (Currency) field in DocType 'LMS Batch'
 #. Description of the 'Amount (USD)' (Currency) field in DocType 'LMS Course'
 #: lms/lms/doctype/lms_batch/lms_batch.json
 #: lms/lms/doctype/lms_course/lms_course.json
 msgid "If you set an amount here, then the USD equivalent setting will not get applied."
-msgstr "Als u hier een bedrag instelt, dan wordt de instelling voor het equivalent in USD niet toegepast."
+msgstr "Als je hier een bedrag instelt, dan wordt de instelling voor het equivalent in USD niet toegepast."
 
 #: lms/lms/doctype/lms_quiz/lms_quiz.py:112
 msgid "If you want open ended questions then make sure each question in the quiz is of open ended type."
-msgstr "Als u open vragen wilt, zorg er dan voor dat elke vraag in de test een open vraag is."
+msgstr "Als je open vragen wilt, zorg er dan voor dat elke vraag in de toets een open vraag is."
 
 #. Option for the 'File Type' (Select) field in DocType 'Course Lesson'
 #. Option for the 'Type' (Select) field in DocType 'LMS Assignment'
@@ -4973,7 +4973,7 @@ msgstr "Uitnodigingsstatus"
 
 #: frontend/src/components/Sidebar/AppSidebar.vue:505
 msgid "Invite your team and students"
-msgstr "Nodig uw team en leerlingen uit"
+msgstr "Nodig je team en cursisten uit"
 
 #: frontend/src/pages/Batches/components/LiveClass.vue:77
 msgid "Invites not sent"
@@ -5674,7 +5674,7 @@ msgstr "Laat gebruikers zichzelf inschrijven."
 
 #: lms/templates/onboarding_header.html:11
 msgid "Lets start setting up your content on the LMS so that you can reclaim time and focus on growth."
-msgstr "Laten we beginnen met het instellen van uw inhoud op het LMS, zodat u tijd kunt terugwinnen en u kunt richten op groei."
+msgstr "Laten we beginnen met het instellen van je inhoud op het LMS, zodat je tijd kunt terugwinnen en je kunt richten op groei."
 
 #. Option for the 'Grade Type' (Select) field in DocType 'Education Detail'
 #: lms/lms/doctype/education_detail/education_detail.json
@@ -5809,7 +5809,7 @@ msgstr "Te lang wegkijken telt als een overtreding."
 
 #: frontend/src/pages/Forms/ProfileEditForm.vue:44
 msgid "Looking for new work or hiring talent?"
-msgstr "Op zoek naar een nieuwe baan of wilt u talent aannemen?"
+msgstr "Op zoek naar een nieuwe baan of wil je talent aannemen?"
 
 #: lms/templates/emails/payment_reminder.html:23
 msgid "Looking forward to seeing you enrolled!"
@@ -5843,7 +5843,7 @@ msgstr "Sjablonen beheren"
 
 #: frontend/src/pages/Home/Home.vue:149
 msgid "Manage your courses and batches at a glance"
-msgstr "Beheer uw cursussen en batches in één oogopslag"
+msgstr "Beheer je cursussen en lesgroepen in één oogopslag"
 
 #: frontend/src/components/Settings/EmailAccount/EmailAccountList.vue:5
 msgid "Manage your email accounts and configure incoming and outgoing settings."
@@ -6949,7 +6949,7 @@ msgstr "Nogmaals gefeliciteerd met deze belangrijke prestatie."
 
 #: frontend/src/components/Assignment.vue:80
 msgid "Once the moderator grades your submission, you'll find the details here."
-msgstr "Zodra de moderator uw inzending beoordeelt, vindt u hier de details."
+msgstr "Zodra de moderator je inzending beoordeelt, vind je hier de details."
 
 #: frontend/src/components/Quiz.vue:376
 msgid "One person only"
@@ -7444,7 +7444,7 @@ msgstr "Betaalgateway verwijderd"
 
 #: lms/lms/doctype/lms_batch_enrollment/lms_batch_enrollment.py:66
 msgid "Payment is required to enroll in this batch."
-msgstr "Betaling is vereist om u in te schrijven voor deze batch."
+msgstr "Betaling is vereist om je in te schrijven voor deze lesgroep."
 
 #. Label of the payments_app_is_not_installed (HTML) field in DocType 'LMS
 #. Settings'
@@ -7563,11 +7563,11 @@ msgstr "Schakel het zoom-account in om deze functie te kunnen gebruiken."
 
 #: frontend/src/components/ChapterRow.vue:351
 msgid "Please enroll for this course to view this lesson"
-msgstr "Schrijf u in voor deze cursus om deze les te bekijken"
+msgstr "Schrijf je in voor deze cursus om deze les te bekijken"
 
 #: frontend/src/pages/Billing.vue:91
 msgid "Please ensure that the billing name you enter is correct, as it will be used on your invoice."
-msgstr "Zorg ervoor dat de naam van de factuur die u invoert correct is, aangezien deze op uw factuur gebruikt zal worden."
+msgstr "Controleer of de factuurnaam die je invoert correct is, want deze wordt op je factuur gebruikt."
 
 #: frontend/src/pages/Billing.vue:395
 msgid "Please enter a coupon code"
@@ -7615,7 +7615,7 @@ msgstr "Installeer de Betaal App om een betaalde cursus aan te maken. Kijk voor 
 
 #: frontend/src/pages/Billing.vue:368
 msgid "Please let us know where you heard about us from."
-msgstr "Laat ons weten waar u over ons gehoord hebt."
+msgstr "Laat ons weten waar je over ons gehoord hebt."
 
 #: frontend/src/pages/Programs/ProgramEnrollment.vue:155
 msgid "Please log in to enroll in this program."
@@ -7631,7 +7631,7 @@ msgstr "Log in om toegang te krijgen tot deze pagina."
 
 #: lms/lms/api.py:259
 msgid "Please login to continue with payment."
-msgstr "Log alstublieft in om door te gaan met de betaling."
+msgstr "Log in om door te gaan met de betaling."
 
 #: lms/lms/utils.py:3350
 msgid "Please login to view program details."
@@ -7643,12 +7643,12 @@ msgstr "Log in om leertrajecten te bekijken."
 
 #: frontend/src/components/UpcomingEvaluations.vue:19
 msgid "Please make sure to schedule your evaluation before this date."
-msgstr "Zorg ervoor dat u uw evaluatie voor deze datum inroostert."
+msgstr "Zorg ervoor dat je je evaluatie voor deze datum inroostert."
 
 #: lms/lms/notification/certificate_request_reminder/certificate_request_reminder.html:7
 #: lms/templates/emails/certificate_request_notification.html:7
 msgid "Please prepare well and be on time for the evaluations."
-msgstr "Bereid u goed voor en kom op tijd voor de evaluaties."
+msgstr "Bereid je goed voor en kom op tijd voor de evaluaties."
 
 #: frontend/src/components/Assignment.vue:370
 msgid "Please provide an answer or upload a file before submitting."
@@ -7656,11 +7656,11 @@ msgstr "Geef een antwoord of upload een bestand voordat je de opdracht inlevert.
 
 #: frontend/src/pages/Billing.vue:199
 msgid "Please provide your consent to proceed with the payment"
-msgstr "Geef alstublieft uw toestemming om verder te gaan met de betaling"
+msgstr "Geef je toestemming om verder te gaan met de betaling"
 
 #: frontend/src/pages/Billing.vue:372
 msgid "Please provide your consent to proceed with the payment."
-msgstr "Geef alstublieft uw toestemming om verder te gaan met de betaling."
+msgstr "Geef je toestemming om verder te gaan met de betaling."
 
 #: frontend/src/pages/ProgrammingExercises/ProgrammingExerciseSubmission.vue:130
 msgid "Please run the code to execute the test cases."
@@ -7719,7 +7719,7 @@ msgstr "Selecteer een quiz"
 
 #: frontend/src/components/Modals/EvaluationModal.vue:130
 msgid "Please select a slot for your evaluation."
-msgstr "Selecteer een tijdsperiode voor uw evaluatie."
+msgstr "Selecteer een tijdsperiode voor je evaluatie."
 
 #: frontend/src/pages/Forms/BatchStudentForm.vue:152
 #: frontend/src/pages/Forms/CourseEnrollmentForm.vue:176
@@ -7944,7 +7944,7 @@ msgstr "Primaire Landen"
 #. in DocType 'User'
 #: lms/fixtures/custom_field.json
 msgid "Private Information includes your Grade and Work Environment Preferences"
-msgstr "Persoonlijke gegevens omvatten uw cijfer en voorkeuren voor de werkomgeving"
+msgstr "Persoonlijke gegevens omvatten je cijfer en voorkeuren voor de werkomgeving"
 
 #. Label of the problem_statement (Text Editor) field in DocType 'LMS
 #. Programming Exercise'
@@ -8582,7 +8582,7 @@ msgstr "Cv-video"
 
 #: frontend/src/pages/Home/Home.vue:172
 msgid "Resume where you left off"
-msgstr "Ga verder waar u gebleven was"
+msgstr "Ga verder waar je gebleven was"
 
 #: frontend/src/components/Settings/Raven/WorkspaceMembers.vue:60
 #: frontend/src/components/Settings/Raven/WorkspaceView.vue:97
@@ -8818,7 +8818,7 @@ msgstr "Een begintijd is verplicht wanneer planning is ingeschakeld."
 
 #: frontend/src/components/UpcomingEvaluations.vue:107
 msgid "Schedule an evaluation to get certified."
-msgstr "Plan een evaluatiegesprek in om uw certificaat te behalen."
+msgstr "Plan een evaluatiegesprek in om je certificaat te behalen."
 
 #: frontend/src/components/Modals/EvaluationModal.vue:4
 msgid "Schedule your evaluation"
@@ -9698,7 +9698,7 @@ msgstr "Feedback versturen"
 
 #: frontend/src/components/Modals/JobApplicationModal.vue:19
 msgid "Submit your resume to proceed with your application for this position. Upon submission, it will be shared with the job poster."
-msgstr "De cursus waarvoor u zich heeft ingeschreven begint morgen. Wees voorbereid en kom op tijd voor de sessie."
+msgstr "Stuur je cv in om verder te gaan met je sollicitatie op deze functie. Na het indienen wordt je cv gedeeld met de plaatser van de vacature."
 
 #: frontend/src/pages/QuizSubmissions.vue:213
 msgid "Submitted On"
@@ -9894,7 +9894,7 @@ msgstr "Tekst"
 
 #: frontend/src/pages/Batches/components/BatchFeedback.vue:28
 msgid "Thank you for providing your feedback."
-msgstr "Bedankt voor uw feedback."
+msgstr "Bedankt voor je feedback."
 
 #: lms/templates/emails/lms_course_interest.html:17
 #: lms/templates/emails/lms_invite_request_approved.html:15
@@ -9925,7 +9925,7 @@ msgstr "De batch bestaat niet."
 
 #: lms/templates/emails/batch_start_reminder.html:6
 msgid "The batch you have enrolled for is starting tomorrow. Please be prepared and be on time for the session."
-msgstr "De cursus waarvoor u zich heeft ingeschreven begint morgen. Wees voorbereid en kom op tijd voor de sessie."
+msgstr "De lesgroep waarvoor je je hebt ingeschreven begint morgen. Wees voorbereid en kom op tijd voor de sessie."
 
 #: frontend/src/components/Settings/Raven/MassRemovalConfirmDialog.vue:81
 msgid "The conditions on {0} could not be worked out, so there is no telling who this change adds or removes. It usually means the app that supplies a condition type is no longer installed. Saving applies the change anyway."
@@ -9961,7 +9961,7 @@ msgstr "Het filter op {0} heeft geen formaat dat deze lijst accepteert."
 
 #: lms/lms/doctype/lms_assignment_submission/lms_assignment_submission.py:147
 msgid "The instructor has left a comment on your assignment {0}"
-msgstr "De docent heeft een opmerking achtergelaten bij uw opdracht {0}"
+msgstr "De docent heeft een opmerking achtergelaten bij je opdracht {0}"
 
 #: lms/templates/emails/batch_start_reminder_recorded.html:13
 msgid "The last day to schedule your evaluation is {0}."
@@ -9969,7 +9969,7 @@ msgstr "De laatste dag om je evaluatie te plannen is {0}."
 
 #: frontend/src/components/UpcomingEvaluations.vue:15
 msgid "The last day to schedule your evaluations is "
-msgstr "De laatste dag om uw evaluaties te plannen is "
+msgstr "De laatste dag om je evaluaties te plannen is "
 
 #: lms/lms/utils.py:3641
 msgid "The lesson does not exist."
@@ -10021,7 +10021,7 @@ msgstr "De batch bestaat niet."
 
 #: lms/patches/create_mentor_request_email_templates.py:36
 msgid "The status of your application has changed."
-msgstr "De status van uw sollicitatie is gewijzigd."
+msgstr "De status van je sollicitatie is gewijzigd."
 
 #: frontend/src/pages/LessonForm.vue:256
 msgid "The stored {0} of this lesson could not be read, so the editor is showing it as empty. It is left untouched and will not be overwritten; anything else you edit still saves. Reload the page; if it still fails, restore the lesson from its version history in Desk."
@@ -10033,7 +10033,7 @@ msgstr "Er zijn geen uitwerkingen voor deze opdracht."
 
 #: frontend/src/pages/Home/AdminHome.vue:194
 msgid "There are no courses currently. Create your first course to get started!"
-msgstr "Er zijn momenteel geen cursussen. Maak uw eerste cursus om te beginnen!"
+msgstr "Er zijn momenteel geen cursussen. Maak je eerste cursus om te beginnen!"
 
 #: lms/lms/doctype/lms_batch/lms_batch.py:186
 #: lms/lms/doctype/lms_batch_enrollment/lms_batch_enrollment.py:107
@@ -10050,7 +10050,7 @@ msgstr "Er zijn geen {0} op deze site."
 
 #: lms/lms/doctype/lms_quiz_submission/lms_quiz_submission.py:95
 msgid "There has been an update on your submission. You have got a score of {0} for the quiz {1}"
-msgstr "Er is een update van uw inzending. U heeft een score van {0} gekregen voor de quiz {1}"
+msgstr "Er is een update van je inzending. Je hebt een score van {0} gekregen voor de toets {1}"
 
 #: frontend/src/components/LockedLessonNotice.vue:18
 msgid "There is no lesson at this address in this course."
@@ -10253,7 +10253,7 @@ msgstr "Deze site heeft geen contactadres. Vraag een moderator om dit in te stel
 #: frontend/src/components/Sidebar/AppSidebar.vue:91
 #: frontend/src/components/Sidebar/AppSidebar.vue:177
 msgid "This site is being updated. You will not be able to make any changes. Full access will be restored shortly."
-msgstr "Deze site wordt bijgewerkt. U zult geen wijzigingen kunnen aanbrengen. De volledige toegang zal binnenkort worden hersteld."
+msgstr "Deze site wordt bijgewerkt. Je kunt tijdelijk geen wijzigingen aanbrengen. De volledige toegang wordt binnenkort hersteld."
 
 #: frontend/src/pages/Forms/AnnouncementForm.vue:116
 #: frontend/src/pages/Forms/AssessmentForm.vue:79
@@ -10600,7 +10600,7 @@ msgstr "Typ iets"
 
 #: frontend/src/components/Quiz.vue:1664
 msgid "Type your answer"
-msgstr "Typ hier uw antwoord"
+msgstr "Typ hier je antwoord"
 
 #: frontend/src/components/Quiz/QuestionEditor.vue:90
 msgid "Type your question here"
@@ -10608,7 +10608,7 @@ msgstr "Typ hier je vraag"
 
 #: frontend/src/components/DiscussionReplies.vue:100
 msgid "Type your reply here..."
-msgstr "Typ hier uw antwoord..."
+msgstr "Typ hier je antwoord..."
 
 #. Option for the 'Grade Type' (Select) field in DocType 'Education Detail'
 #: lms/lms/doctype/education_detail/education_detail.json
@@ -11062,13 +11062,13 @@ msgstr "Bezoek onze website"
 
 #: lms/templates/emails/batch_confirmation.html:25
 msgid "Visit the following link to view your "
-msgstr "Bezoek de volgende link om uw "
+msgstr "Bezoek de volgende link om je "
 
 #: lms/templates/emails/batch_start_reminder.html:23
 #: lms/templates/emails/batch_start_reminder_recorded.html:26
 #: lms/templates/emails/live_class_reminder.html:20
 msgid "Visit your batch"
-msgstr "Bezoek uw batch"
+msgstr "Bezoek je lesgroep"
 
 #. Label of the internship (Table) field in DocType 'User'
 #: lms/fixtures/custom_field.json
@@ -11091,7 +11091,7 @@ msgstr "Kijktijd (minuten)"
 
 #: lms/templates/emails/batch_confirmation.html:6
 msgid "We are pleased to inform you that you have been enrolled in our upcoming batch. Congratulations!"
-msgstr "We zijn blij u te kunnen meedelen dat u bent ingeschreven voor onze volgende batch. Gefeliciteerd!"
+msgstr "We zijn blij je te kunnen laten weten dat je bent ingeschreven voor onze volgende lesgroep. Gefeliciteerd!"
 
 #: lms/lms/utils.py:3119
 msgid "We could not find your payment record. Please contact the administrator."
@@ -11152,7 +11152,7 @@ msgstr "Zodra je er klaar voor bent, kun je een evaluatie plannen om je certific
 
 #: frontend/src/pages/Billing.vue:163
 msgid "Where did you hear about us?"
-msgstr "Waar heeft u over ons gehoord?"
+msgstr "Waar heb je over ons gehoord?"
 
 #: frontend/src/pages/Forms/PersonaForm.vue:142
 msgid "Where do you want to start?"
@@ -11169,7 +11169,7 @@ msgstr "Vensterfocus verloren"
 
 #: lms/templates/emails/certification.html:10
 msgid "With this certification, you can now showcase your updated skills and share your achievement with your colleagues and on LinkedIn. To access your certificate, please click on the link provided below. Make sure you are logged in to the portal."
-msgstr "Met dit certificaat kunt u uw bijgewerkte vaardigheden laten zien en uw prestatie delen met uw collega's en op LinkedIn. Klik op de onderstaande link om uw certificaat te bekijken. Zorg ervoor dat u bent ingelogd op het portaal."
+msgstr "Met dit certificaat kun je je bijgewerkte vaardigheden laten zien en je prestatie delen met je collega's en op LinkedIn. Klik op de onderstaande link om je certificaat te bekijken. Zorg ervoor dat je bent ingelogd op het portaal."
 
 #. Option for the 'Open to' (Select) field in DocType 'User'
 #: lms/fixtures/custom_field.json
@@ -11215,7 +11215,7 @@ msgstr "Schrijf een recensie"
 
 #: frontend/src/components/Assignment.vue:166
 msgid "Write your answer here"
-msgstr "Schrijf hier uw antwoord"
+msgstr "Schrijf hier je antwoord"
 
 #: frontend/src/components/Quiz.vue:157 frontend/src/components/Quiz.vue:237
 msgid "Wrong answers deduct {0} {1}."
@@ -11235,23 +11235,23 @@ msgstr "Ja"
 #: frontend/src/components/Layouts/MobileLayout.vue:37
 #: frontend/src/pages/MobileYou.vue:2 frontend/src/pages/MobileYou.vue:250
 msgid "You"
-msgstr "U"
+msgstr "Jij"
 
 #: lms/lms/doctype/lms_certificate_request/lms_certificate_request.py:116
 msgid "You already have an evaluation on {0} at {1} for the course {2}."
-msgstr "U hebt al een evaluatie op {0} op {1} voor de cursus {2}."
+msgstr "Je hebt al een evaluatie op {0} om {1} voor de cursus {2}."
 
 #: frontend/src/pages/Courses/CourseCertification.vue:8
 msgid "You are already certified for this course. Click on the card below to open your certificate."
-msgstr "U bent al gecertificeerd voor deze cursus. Klik op de kaart hieronder om uw certificaat te openen."
+msgstr "Je bent al gecertificeerd voor deze cursus. Klik op de kaart hieronder om je certificaat te openen."
 
 #: lms/lms/api.py:279
 msgid "You are already enrolled for this batch."
-msgstr "U bent al ingeschreven voor deze batch."
+msgstr "Je bent al ingeschreven voor deze lesgroep."
 
 #: lms/lms/api.py:273
 msgid "You are already enrolled for this course."
-msgstr "U bent al ingeschreven voor deze cursus."
+msgstr "Je bent al ingeschreven voor deze cursus."
 
 #: lms/templates/signup-form.html:15
 msgid "You are already registered. {0} instead."
@@ -11304,11 +11304,11 @@ msgstr "Je hebt geen toestemming om deze toets te bekijken."
 
 #: lms/lms/doctype/lms_certificate/lms_certificate.py:233
 msgid "You are not enrolled in this course."
-msgstr "U bent niet ingeschreven voor deze cursus."
+msgstr "Je bent niet ingeschreven voor deze cursus."
 
 #: frontend/src/pages/SCORMChapter.vue:22
 msgid "You are not enrolled in this course. Please enroll to access this lesson."
-msgstr "U bent niet ingeschreven voor deze cursus. Schrijf u in om toegang te krijgen tot deze les."
+msgstr "Je bent niet ingeschreven voor deze cursus. Schrijf je in om toegang te krijgen tot deze les."
 
 #: lms/lms/doctype/lms_quiz/lms_quiz.py:869
 msgid "You are not permitted to access the question bank."
@@ -11316,7 +11316,7 @@ msgstr "Je hebt geen toegang tot de vragenbank."
 
 #: frontend/src/components/NoPermission.vue:23
 msgid "You are not permitted to access this page."
-msgstr "U bent niet toegestaan om deze pagina te bekijken."
+msgstr "Je mag deze pagina niet bekijken."
 
 #: frontend/src/pages/Forms/NewBatchForm.vue:5
 msgid "You are not permitted to create a batch."
@@ -11378,7 +11378,7 @@ msgstr "Je kunt het beter doen,"
 
 #: lms/templates/emails/job_application.html:6
 msgid "You can find their resume attached to this email."
-msgstr "U vindt hun Cv als bijlage bij deze e-mail."
+msgstr "Je vindt hun cv als bijlage bij deze e-mail."
 
 #: frontend/src/pages/Forms/ProfileEditForm.vue:125
 msgid "You can only edit your own profile."
@@ -11418,7 +11418,7 @@ msgstr "Je kunt geen evaluatie boeken voor een andere gebruiker."
 
 #: frontend/src/pages/ProfileRoles.vue:12
 msgid "You cannot change the roles in read-only mode."
-msgstr "U kunt de rollen in de alleen-lezen modus niet wijzigen."
+msgstr "Je kunt de rollen in de alleen-lezen modus niet wijzigen."
 
 #: frontend/src/pages/ProfileEvaluator.vue:10
 msgid "You cannot change your slots while the site is being updated."
@@ -11426,15 +11426,15 @@ msgstr "Je kunt je tijdvakken niet wijzigen terwijl de site wordt bijgewerkt."
 
 #: lms/lms/doctype/lms_enrollment/lms_enrollment.py:110
 msgid "You cannot enroll in an unpublished course."
-msgstr "U kunt zich niet inschrijven voor een niet-gepubliceerde cursus."
+msgstr "Je kunt je niet inschrijven voor een niet-gepubliceerde cursus."
 
 #: lms/lms/utils.py:3418
 msgid "You cannot enroll in an unpublished program."
-msgstr "U kunt zich niet inschrijven voor een niet-gepubliceerd programma."
+msgstr "Je kunt je niet inschrijven voor een niet-gepubliceerd leertraject."
 
 #: lms/lms/doctype/lms_enrollment/lms_enrollment.py:104
 msgid "You cannot enroll in this course as self-learning is disabled. Please contact the Administrator."
-msgstr "U kunt zich niet inschrijven voor deze cursus omdat zelfstudie is uitgeschakeld. Neem contact op met de beheerder."
+msgstr "Je kunt je niet inschrijven voor deze cursus omdat zelfstudie is uitgeschakeld. Neem contact op met de beheerder."
 
 #: frontend/src/pages/QuizSubmission.vue:429
 msgid "You cannot grade your own submission."
@@ -11442,11 +11442,11 @@ msgstr "Je kunt je eigen inzending niet beoordelen."
 
 #: lms/lms/doctype/lms_certificate_request/lms_certificate_request.py:132
 msgid "You cannot schedule evaluations after {0}."
-msgstr "U kunt geen evaluaties inplannen na {0}."
+msgstr "Je kunt geen evaluaties inplannen na {0}."
 
 #: lms/lms/doctype/lms_certificate_request/lms_certificate_request.py:123
 msgid "You cannot schedule evaluations for past slots."
-msgstr "U kunt geen evaluaties plannen voor slots uit het verleden."
+msgstr "Je kunt geen evaluaties plannen voor tijdvakken uit het verleden."
 
 #: lms/lms/api.py:3107
 msgid "You cannot start this live class."
@@ -11454,11 +11454,11 @@ msgstr "Je kunt deze live les niet starten."
 
 #: lms/lms/utils.py:3669
 msgid "You do not have access to this batch."
-msgstr "U hebt geen toegang tot deze batch."
+msgstr "Je hebt geen toegang tot deze lesgroep."
 
 #: lms/lms/utils.py:3652
 msgid "You do not have access to this course."
-msgstr "U hebt geen toegang tot deze cursus."
+msgstr "Je hebt geen toegang tot deze cursus."
 
 #: lms/lms/api.py:2828
 msgid "You do not have access to this lesson."
@@ -11490,7 +11490,7 @@ msgstr "Je hebt geen toegang tot de voortgangsgegevens van deze cursus."
 
 #: frontend/src/components/NoPermission.vue:9
 msgid "You do not have permission to access this page."
-msgstr "U heeft geen rechten om deze pagina te openen."
+msgstr "Je hebt geen rechten om deze pagina te openen."
 
 #: lms/lms/api.py:1243
 msgid "You do not have permission to add a lesson."
@@ -11570,7 +11570,7 @@ msgstr "Je hebt geen toestemming om agenda-afspraken voor deze evaluatie te make
 
 #: lms/lms/api.py:2745
 msgid "You do not have permission to update meta tags."
-msgstr "U hebt geen toestemming om metatags bij te werken."
+msgstr "Je hebt geen toestemming om metatags bij te werken."
 
 #: lms/lms/api.py:2782
 msgid "You do not have permission to update this submission."
@@ -11582,60 +11582,60 @@ msgstr "Je hebt geen toestemming om deze cursus te bekijken."
 
 #: lms/templates/notifications.html:27
 msgid "You don't have any notifications."
-msgstr "U heeft geen meldingen."
+msgstr "Je hebt geen meldingen."
 
 #: frontend/src/components/Quiz.vue:754
 #, python-format
 msgid "You got {0}% correct answers with a score of {1} out of {2}"
-msgstr "U hebt {0}% juiste antwoorden met een score van {1} van {2}"
+msgstr "Je hebt {0}% juiste antwoorden met een score van {1} van {2}"
 
 #: lms/templates/emails/live_class_reminder.html:6
 msgid "You have a live class scheduled tomorrow. Please be prepared and be on time for the session."
-msgstr "Morgen staat er een live les voor u gepland. Wees voorbereid en kom op tijd voor de sessie."
+msgstr "Morgen staat er een live les voor je gepland. Wees voorbereid en kom op tijd voor de sessie."
 
 #: lms/job/doctype/lms_job_application/lms_job_application.py:30
 msgid "You have already applied for this job."
-msgstr "U hebt al op deze vacature gesolliciteerd."
+msgstr "Je hebt al op deze vacature gesolliciteerd."
 
 #: lms/lms/api.py:303
 msgid "You have already purchased the certificate for this course."
-msgstr "U hebt het certificaat voor deze cursus al gekocht."
+msgstr "Je hebt het certificaat voor deze cursus al gekocht."
 
 #: lms/lms/doctype/lms_course_review/lms_course_review.py:22
 msgid "You have already reviewed this course"
-msgstr "U heeft deze cursus al nagekeken"
+msgstr "Je hebt deze cursus al beoordeeld"
 
 #: frontend/src/pages/JobDetail.vue:52
 msgid "You have applied"
-msgstr "U heeft gesolliciteerd"
+msgstr "Je hebt gesolliciteerd"
 
 #: frontend/src/pages/Batches/components/BatchOverlay.vue:148
 msgid "You have been enrolled in this batch"
-msgstr "U bent ingeschreven in deze batch"
+msgstr "Je bent ingeschreven voor deze lesgroep"
 
 #: frontend/src/components/CourseCardOverlay.vue:193
 msgid "You have been enrolled in this course"
-msgstr "U bent ingeschreven voor deze cursus"
+msgstr "Je bent ingeschreven voor deze cursus"
 
 #: lms/lms/doctype/lms_quiz_submission/lms_quiz_submission.py:43
 msgid "You have exceeded the maximum number of attempts ({0}) for this quiz"
-msgstr "U heeft het maximum aantal pogingen ({0}) dat is toegestaan voor deze kwis al overschreden"
+msgstr "Je hebt het maximum aantal pogingen ({0}) voor deze toets overschreden"
 
 #: lms/lms/doctype/lms_quiz_submission/lms_quiz_submission.py:92
 msgid "You have got a score of {0} for the quiz {1}"
-msgstr "U heeft een score van {0} voor de quiz {1}"
+msgstr "Je hebt een score van {0} voor de toets {1}"
 
 #: lms/lms/doctype/lms_certificate/lms_certificate.py:242
 msgid "You have not completed the course yet."
-msgstr "U hebt de cursus nog niet voltooid."
+msgstr "Je hebt de cursus nog niet voltooid."
 
 #: frontend/src/pages/ProfileCertificates.vue:27
 msgid "You have not received any certificates yet."
-msgstr "U heeft nog geen certificaten ontvangen."
+msgstr "Je hebt nog geen certificaten ontvangen."
 
 #: lms/lms/widgets/NoPreviewModal.html:12
 msgid "You have opted to be notified for this course. You will receive an email when the course becomes available."
-msgstr "U hebt ervoor gekozen om op de hoogte te worden gebracht van deze cursus. U ontvangt een e-mail wanneer de cursus beschikbaar is."
+msgstr "Je hebt ervoor gekozen om op de hoogte te worden gebracht van deze cursus. Je ontvangt een e-mail wanneer de cursus beschikbaar is."
 
 #: frontend/src/components/Settings/Raven/UnsavedChangesDialog.vue:5
 msgid "You have unsaved changes, leave anyway?"
@@ -11647,15 +11647,15 @@ msgstr "Je hebt {0} onbeantwoorde {1}. Deze worden als onjuist gemarkeerd als je
 
 #: frontend/src/pages/Home/Home.vue:132 frontend/src/pages/Home/Home.vue:155
 msgid "You have {0} upcoming {1} and {2} {3} scheduled."
-msgstr "U hebt een {0} aanstaande {1} en een {2} {3} gepland."
+msgstr "Je hebt {0} aanstaande {1} en {2} {3} gepland."
 
 #: frontend/src/pages/Home/Home.vue:139 frontend/src/pages/Home/Home.vue:162
 msgid "You have {0} upcoming {1}."
-msgstr "U heeft {0} aankomende {1}."
+msgstr "Je hebt {0} aankomende {1}."
 
 #: frontend/src/pages/Home/Home.vue:144 frontend/src/pages/Home/Home.vue:167
 msgid "You have {0} {1} scheduled."
-msgstr "U hebt {0} {1} gepland."
+msgstr "Je hebt {0} {1} gepland."
 
 #: frontend/src/pages/ProfileEvaluator.vue:151
 msgid "You haven't added any slots yet. Add the days and times you're available each week, so learners can book evaluations with you."
@@ -11671,7 +11671,7 @@ msgstr "Je moet beheerder zijn om badges aan gebruikers toe te kennen."
 
 #: lms/lms/doctype/lms_course_review/lms_course_review.py:18
 msgid "You must be enrolled in the course to submit a review"
-msgstr "U moet ingeschreven zijn in de cursus om een beoordeling te kunnen geven"
+msgstr "Je moet ingeschreven zijn voor de cursus om een beoordeling te kunnen geven"
 
 #: frontend/src/components/Settings/Raven/RavenSettings.vue:49
 msgid "You need the System Manager role to manage the Raven integration."
@@ -11679,11 +11679,11 @@ msgstr "Je hebt de rol Systeembeheerder nodig om de Raven-koppeling te beheren."
 
 #: lms/lms/doctype/lms_enrollment/lms_enrollment.py:124
 msgid "You need to complete the payment for this course before enrolling."
-msgstr "U moet de betaling voor deze cursus voltooien voordat u zich inschrijft."
+msgstr "Je moet de betaling voor deze cursus voltooien voordat je je inschrijft."
 
 #: frontend/src/components/CourseCardOverlay.vue:177
 msgid "You need to login first to enroll for this course"
-msgstr "U moet eerst inloggen om in te schrijven voor deze cursus"
+msgstr "Je moet eerst inloggen om je in te schrijven voor deze cursus"
 
 #: frontend/src/pages/Home/Streak.vue:14
 msgid "You rock,"
@@ -11703,11 +11703,11 @@ msgstr "Je bent ingeschreven voor {0} – begin zodra je er klaar voor bent"
 
 #: lms/templates/emails/mentor_request_creation_email.html:4
 msgid "You've applied to become a mentor for this course. Your request is currently under review."
-msgstr "U hebt een aanvraag ingediend om mentor te worden voor deze cursus. Uw aanvraag wordt momenteel bekeken."
+msgstr "Je hebt een aanvraag ingediend om mentor te worden voor deze cursus. Je aanvraag wordt momenteel bekeken."
 
 #: frontend/src/components/Assignment.vue:78
 msgid "You've successfully submitted the assignment."
-msgstr "U hebt de opdracht succesvol ingediend."
+msgstr "Je hebt de opdracht succesvol ingediend."
 
 #: frontend/src/components/Quiz.vue:259
 msgid "You've used all {0} {1} for this quiz. Reach out to your instructor if you need to try again."
@@ -11734,11 +11734,11 @@ msgstr "YouTube-link toegevoegd. Cursisten zien de video op de cursuspagina. Maa
 
 #: lms/www/new-sign-up.html:56
 msgid "Your Account has been successfully created!"
-msgstr "Uw account is succesvol aangemaakt!"
+msgstr "Je account is succesvol aangemaakt!"
 
 #: frontend/src/pages/ProgrammingExercises/ProgrammingExerciseSubmission.vue:112
 msgid "Your Output"
-msgstr "Uw uitvoer"
+msgstr "Je uitvoer"
 
 #: frontend/src/components/Modals/JobApplicationModal.vue:122
 msgid "Your application has been submitted successfully"
@@ -11746,46 +11746,46 @@ msgstr "Je sollicitatie is verstuurd"
 
 #: lms/lms/doctype/lms_batch/lms_batch.py:640
 msgid "Your batch {0} is starting tomorrow"
-msgstr "Uw batch {0} begint morgen"
+msgstr "Je lesgroep {0} begint morgen"
 
 #: frontend/src/components/Controls/Uploader.vue:34
 msgid "Your browser does not support the video tag."
-msgstr "Uw browser ondersteunt deze video-tag niet."
+msgstr "Je browser ondersteunt deze video-tag niet."
 
 #: lms/lms/doctype/lms_live_class/lms_live_class.py:474
 msgid "Your class on {0} is today"
-msgstr "Uw les op {0} is vandaag"
+msgstr "Je les op {0} is vandaag"
 
 #: frontend/src/components/Settings/EmailTemplate/EmailTemplateAdd.vue:27
 #: frontend/src/components/Settings/EmailTemplate/EmailTemplateEdit.vue:27
 #: frontend/src/pages/Forms/EmailTemplateForm.vue:20
 msgid "Your enrollment in {{ batch_name }} is confirmed"
-msgstr "Uw inschrijving op {{ batch_name }} is bevestigd"
+msgstr "Je inschrijving voor {{ batch_name }} is bevestigd"
 
 #: lms/lms/notification/certificate_request_reminder/certificate_request_reminder.html:3
 #: lms/templates/emails/certificate_request_notification.html:3
 msgid "Your evaluation for the course {0} has been scheduled on {1} at {2} {3}."
-msgstr "Uw evaluatie voor de cursus {0} is gepland op {1} bij {2} {3}."
+msgstr "Je evaluatie voor de cursus {0} is gepland op {1} om {2} {3}."
 
 #: lms/lms/doctype/lms_certificate_request/lms_certificate_request.py:153
 msgid "Your evaluation slot has been booked"
-msgstr "Uw evaluatieafspraak is gereserveerd"
+msgstr "Je evaluatieafspraak is gereserveerd"
 
 #: lms/templates/emails/certificate_request_notification.html:5
 msgid "Your evaluator is {0}"
-msgstr "Uw beoordelaar is {0}"
+msgstr "Je beoordelaar is {0}"
 
 #: frontend/src/pages/Home/Streak.vue:49
 msgid "Your learning streak counts the number of days in a row you’ve kept up your learning, whether it’s a lesson, quiz, or assignment. Don’t worry, weekends don’t break your streak."
-msgstr "Uw leer-reeks telt het aantal dagen achter elkaar dat u hebt geleerd, of het nu om een les, quiz of opdracht gaat. Maak u geen zorgen, weekenden verbreken uw reeks niet."
+msgstr "Je leerreeks telt het aantal dagen achter elkaar dat je hebt geleerd, of het nu om een les, toets of opdracht gaat. Maak je geen zorgen, weekenden verbreken je reeks niet."
 
 #: lms/templates/emails/mentor_request_status_update_email.html:4
 msgid "Your request to join us as a mentor for the course"
-msgstr "Uw verzoek om als mentor deel te nemen aan de cursus"
+msgstr "Je verzoek om als mentor deel te nemen aan de cursus"
 
 #: frontend/src/components/Quiz.vue:747
 msgid "Your submission has been successfully saved. The instructor will review and grade it shortly, and you'll be notified of your final result."
-msgstr "Uw inzending is succesvol opgeslagen. De docent zal het binnenkort nakijken en beoordelen, en u krijgt bericht over uw eindresultaat."
+msgstr "Je inzending is succesvol opgeslagen. De docent zal deze binnenkort nakijken en beoordelen, en je krijgt bericht over je eindresultaat."
 
 #: frontend/src/pages/Forms/PersonaForm.vue:141
 msgid "Your workspace is ready"
@@ -11872,7 +11872,7 @@ msgstr "pogingen"
 
 #: lms/templates/emails/payment_reminder.html:4
 msgid "but didn’t complete your payment"
-msgstr "maar uw betaling is niet voltooid"
+msgstr "maar je betaling is niet voltooid"
 
 #. Option for the 'Event Type' (Select) field in DocType 'LMS Quiz Violation
 #. Log'
@@ -11882,7 +11882,7 @@ msgstr "camera losgekoppeld"
 
 #: lms/templates/emails/mentor_request_creation_email.html:5
 msgid "cancel your application"
-msgstr "uw sollicitatie annuleren"
+msgstr "je sollicitatie annuleren"
 
 #: frontend/src/pages/CertifiedParticipants.vue:88
 msgid "certificate"
@@ -12141,7 +12141,7 @@ msgstr "tabbladwissel"
 #: lms/templates/emails/published_batch_notification.html:7
 #: lms/templates/emails/published_course_notification.html:7
 msgid "that might interest you!"
-msgstr "dat interesseert u misschien!"
+msgstr "dat interesseert je misschien!"
 
 #: lms/lms/api.py:1821
 msgid "title must be a string"
@@ -12167,7 +12167,7 @@ msgstr "om te selecteren"
 
 #: frontend/src/pages/Batches/components/BatchFeedback.vue:37
 msgid "to view your feedback."
-msgstr "om uw feedback te bekijken."
+msgstr "om je feedback te bekijken."
 
 #: frontend/src/components/Quiz.vue:930
 msgid "unattempted"
@@ -12208,7 +12208,7 @@ msgstr "waarschuwing"
 
 #: lms/templates/emails/mentor_request_creation_email.html:5
 msgid "you can"
-msgstr "U kunt"
+msgstr "je kunt"
 
 #: frontend/src/pages/Assignments.vue:4
 msgid "{0} Assignments"
@@ -12308,7 +12308,7 @@ msgstr "{0} is geen geldig tijdstip."
 
 #: lms/lms/notification/certificate_request_reminder/certificate_request_reminder.html:5
 msgid "{0} is your evaluator"
-msgstr "{0} is uw beoordelaar"
+msgstr "{0} is je beoordelaar"
 
 #: frontend/src/utils/quizQuestion.js:95
 msgid "{0} marks"
@@ -12316,15 +12316,15 @@ msgstr "{0} punten"
 
 #: lms/lms/utils.py:699
 msgid "{0} mentioned you in a comment"
-msgstr "{0} heeft u genoemd in een reactie"
+msgstr "{0} heeft je genoemd in een reactie"
 
 #: lms/templates/emails/mention_template.html:2
 msgid "{0} mentioned you in a comment in your batch."
-msgstr "{0} noemde u in een reactie in uw batch."
+msgstr "{0} noemde je in een reactie in je lesgroep."
 
 #: lms/lms/utils.py:652 lms/lms/utils.py:658
 msgid "{0} mentioned you in a comment in {1}"
-msgstr "{0} heeft u vermeld in een opmerking in een {1}"
+msgstr "{0} heeft je vermeld in een opmerking in {1}"
 
 #: lms/lms/email_account.py:69
 msgid "{0} must be a string"
@@ -12434,7 +12434,7 @@ msgid "Test payment. No real money will be charged."
 msgstr "Testbetaling. Er wordt geen echt geld afgeschreven."
 
 msgid "One-time course access. This does not start a subscription or automatic debit."
-msgstr "Eenmalige aankoop van cursustoegang. U sluit hiermee geen abonnement af en geeft geen toestemming voor automatische incasso."
+msgstr "Eenmalige aankoop van cursustoegang. Je sluit hiermee geen abonnement af en geeft geen toestemming voor automatische incasso."
 
 msgid "Continue existing checkout"
 msgstr "Bestaande betaling hervatten"
@@ -12449,7 +12449,7 @@ msgid "Continue to payment"
 msgstr "Verder naar betalen"
 
 msgid "Payment could not be opened. Refresh this page to recover your existing checkout; do not start a separate payment."
-msgstr "De betaling kon niet worden geopend. Vernieuw deze pagina om uw bestaande betaling te hervatten. Start geen tweede betaling."
+msgstr "De betaling kon niet worden geopend. Vernieuw deze pagina om je bestaande betaling te hervatten. Start geen tweede betaling."
 
 msgid "Back to course"
 msgstr "Terug naar de cursus"
@@ -12458,22 +12458,22 @@ msgid "Payment status"
 msgstr "Betaalstatus"
 
 msgid "Checking payment..."
-msgstr "Uw betaling wordt gecontroleerd..."
+msgstr "Je betaling wordt gecontroleerd..."
 
 msgid "Payment confirmation is not available yet. Please check again; do not pay twice."
-msgstr "Uw betaling is nog niet bevestigd. Controleer de status opnieuw en betaal niet nogmaals."
+msgstr "Je betaling is nog niet bevestigd. Controleer de status opnieuw en betaal niet nogmaals."
 
 msgid "Payment confirmed. Open the course to enroll or continue learning."
-msgstr "Uw betaling is bevestigd. Open de cursus om u in te schrijven of verder te leren."
+msgstr "Je betaling is bevestigd. Open de cursus om je in te schrijven of verder te leren."
 
 msgid "Payment was not completed. You have not received access from this order."
-msgstr "De betaling is niet voltooid. Deze bestelling heeft u geen toegang gegeven."
+msgstr "De betaling is niet voltooid. Deze bestelling heeft je geen toegang gegeven."
 
 msgid "This payment was reversed. Access from this order has been withdrawn."
 msgstr "Deze betaling is teruggedraaid. De toegang vanuit deze bestelling is ingetrokken."
 
 msgid "Your payment is awaiting confirmation. Returning from the payment provider does not confirm payment."
-msgstr "Uw betaling wacht op bevestiging. Terugkeren vanaf de betaalprovider betekent niet dat de betaling is geslaagd."
+msgstr "Je betaling wacht op bevestiging. Terugkeren vanaf de betaalprovider betekent niet dat de betaling is geslaagd."
 
 msgid "Order"
 msgstr "Bestelling"
@@ -12482,22 +12482,22 @@ msgid "Check payment status"
 msgstr "Betaalstatus controleren"
 
 msgid "Your learning environment"
-msgstr "Uw leeromgeving"
+msgstr "Je leeromgeving"
 
 msgid "Your next step starts here."
-msgstr "Uw volgende stap begint hier."
+msgstr "Je volgende stap begint hier."
 
 msgid "Review your course and complete payment. You can then continue learning here."
-msgstr "Controleer uw cursus en rond de betaling af. Daarna kunt u hier verder leren."
+msgstr "Controleer je cursus en rond de betaling af. Daarna kun je hier verder leren."
 
 msgid "Checkout progress"
-msgstr "Voortgang van uw bestelling"
+msgstr "Voortgang van je bestelling"
 
 msgid "Review order"
 msgstr "Controleren"
 
 msgid "Your order"
-msgstr "Uw bestelling"
+msgstr "Je bestelling"
 
 msgid "One-time purchase"
 msgstr "Eenmalige aankoop"
@@ -12506,16 +12506,16 @@ msgid "No subscription or automatic debit"
 msgstr "Geen abonnement of automatische incasso"
 
 msgid "Access after payment confirmation"
-msgstr "Toegang na bevestiging van uw betaling"
+msgstr "Toegang na bevestiging van je betaling"
 
 msgid "Continue learning in this environment"
 msgstr "Verder leren in deze leeromgeving"
 
 msgid "You complete payment with our payment provider, then return here."
-msgstr "U rondt de betaling af bij onze betaalprovider. Daarna keert u hier terug."
+msgstr "Je rondt de betaling af bij onze betaalprovider. Daarna keer je hier terug."
 
 msgid "Review your purchase"
-msgstr "Controleer uw aankoop"
+msgstr "Controleer je aankoop"
 
 msgid "You already have an open checkout for this course. Continue that checkout to avoid paying twice."
 msgstr "Er staat al een bestelling voor deze cursus open. Ga daarmee verder om dubbel betalen te voorkomen."
@@ -12524,7 +12524,7 @@ msgid "Back to courses"
 msgstr "Terug naar cursussen"
 
 msgid "Your payment status and next step, together in your learning environment."
-msgstr "Uw betaalstatus en volgende stap, samen in uw leeromgeving."
+msgstr "Je betaalstatus en volgende stap, samen in je leeromgeving."
 
 msgid "Ready to keep learning."
 msgstr "Klaar om verder te leren."
@@ -12548,7 +12548,7 @@ msgid "Access from this order withdrawn"
 msgstr "Toegang via deze bestelling ingetrokken"
 
 msgid "We are checking your payment."
-msgstr "We controleren uw betaling."
+msgstr "We controleren je betaling."
 
 msgid "Awaiting confirmation"
 msgstr "In afwachting van bevestiging"
@@ -13251,7 +13251,7 @@ msgid "Choose a tier"
 msgstr "Kies een toegangsniveau"
 
 msgid "Compare the available tiers and select the access level that suits you."
-msgstr "Vergelijk de beschikbare toegangsniveaus en kies het niveau dat bij u past."
+msgstr "Vergelijk de beschikbare toegangsniveaus en kies het niveau dat bij je past."
 
 msgid "Loading tiers..."
 msgstr "Toegangsniveaus laden..."
@@ -13263,7 +13263,7 @@ msgid "Paid tier upgrades are not available yet."
 msgstr "Betaalde verhogingen van het toegangsniveau zijn nog niet beschikbaar."
 
 msgid "Selecting a tier here does not start a subscription, charge a payment or change your access."
-msgstr "Door hier een toegangsniveau te kiezen, start u geen abonnement, wordt er niets afgeschreven en verandert uw toegang niet."
+msgstr "Door hier een toegangsniveau te kiezen, start je geen abonnement, wordt er niets afgeschreven en verandert je toegang niet."
 
 msgid "Current tier access"
 msgstr "Huidig toegangsniveau"
@@ -13293,7 +13293,7 @@ msgid "Selected: {0}"
 msgstr "Geselecteerd: {0}"
 
 msgid "Your selection"
-msgstr "Uw keuze"
+msgstr "Je keuze"
 
 msgid "Prices, billing periods and recurring payment consent will be shown here once subscription checkout is available."
 msgstr "Prijzen, betaalperioden en toestemming voor terugkerende betalingen worden hier getoond zodra het afsluiten van abonnementen beschikbaar is."
@@ -13316,4 +13316,284 @@ msgstr "Deze cursus is niet beschikbaar."
 
 msgid "Try again"
 msgstr "Opnieuw proberen"
+
+#. Labels and descriptions from navigation/settings registries are translated at render time.
+msgid "Configure system-wide defaults, notifications, and contact information"
+msgstr "Stel standaardwaarden, meldingen en contactgegevens voor het hele systeem in"
+
+msgid "System Configurations"
+msgstr "Systeeminstellingen"
+
+msgid "If enabled, users can access the course and batch lists without logging in."
+msgstr "Als dit is ingeschakeld, kunnen gebruikers cursus- en lesgroeplijsten bekijken zonder in te loggen."
+
+msgid "If enabled, users will no able to move forward in a video"
+msgstr "Als dit is ingeschakeld, kunnen gebruikers niet vooruitspoelen in een video"
+
+msgid "If checked, users will not be able to install the application as a Progressive Web App."
+msgstr "Als dit is aangevinkt, kunnen gebruikers de applicatie niet als Progressive Web App installeren."
+
+msgid "If enabled, it sends google calendar invite to the student for evaluations."
+msgstr "Als dit is ingeschakeld, ontvangen cursisten voor evaluaties een Google Agenda-uitnodiging."
+
+msgid "Notify members when a new course is published."
+msgstr "Stuur leden een melding wanneer een nieuwe cursus wordt gepubliceerd."
+
+msgid "Notify members when a new batch is published."
+msgstr "Stuur leden een melding wanneer een nieuwe lesgroep wordt gepubliceerd."
+
+msgid "Batch Confirmation Email Template"
+msgstr "E-mailsjabloon voor lesgroepbevestiging"
+
+msgid "Email template sent to students upon batch enrollment confirmation."
+msgstr "E-mailsjabloon dat cursisten ontvangen na bevestiging van hun lesgroepinschrijving."
+
+msgid "Certification Email Template"
+msgstr "E-mailsjabloon voor certificering"
+
+msgid "Email template sent to students when they earn a certification."
+msgstr "E-mailsjabloon dat cursisten ontvangen wanneer ze een certificaat behalen."
+
+msgid "Contact Information"
+msgstr "Contactgegevens"
+
+msgid "Users can reach out to this email for support or inquiries."
+msgstr "Gebruikers kunnen dit e-mailadres gebruiken voor ondersteuning of vragen."
+
+msgid "Users can reach out to this URL for support or inquiries."
+msgstr "Gebruikers kunnen deze URL gebruiken voor ondersteuning of vragen."
+
+msgid "If enabled, users can post job openings on the job board. Else only admins can post jobs."
+msgstr "Als dit is ingeschakeld, kunnen gebruikers vacatures plaatsen. Anders kunnen alleen beheerders dit doen."
+
+msgid "Integrations"
+msgstr "Koppelingen"
+
+msgid "Livecode URL"
+msgstr "Livecode-URL"
+
+msgid "Allows users to pick a profile cover image from Unsplash. https://unsplash.com/documentation#getting-started."
+msgstr "Laat gebruikers een profielomslagafbeelding kiezen uit Unsplash. https://unsplash.com/documentation#getting-started."
+
+msgid "Control how lessons are marked complete: dwell time and enforcement toggles for video, quiz, and assignment."
+msgstr "Bepaal hoe lessen worden afgerond: minimale lestijd en verplichte voltooiing van video's, toetsen en opdrachten."
+
+msgid "Dwell Time"
+msgstr "Minimale lestijd"
+
+msgid "Lesson dwell time (seconds)"
+msgstr "Minimale lestijd (seconden)"
+
+msgid "Seconds a learner must stay on a lesson before it auto-marks complete."
+msgstr "Aantal seconden dat een cursist bij een les moet blijven voordat deze automatisch als voltooid wordt gemarkeerd."
+
+msgid "Enforcement"
+msgstr "Verplichte voltooiing"
+
+msgid "Enforce video completion"
+msgstr "Volledig bekijken van video's verplichten"
+
+msgid "When enabled, lessons that contain a video can only be marked complete by playing the video to the end. If the video fails to load, the dwell timer is used as a fallback."
+msgstr "Als dit is ingeschakeld, worden lessen met een video pas afgerond nadat de video helemaal is afgespeeld. Als de video niet laadt, geldt de minimale lestijd als terugval."
+
+msgid "Enforce assignment completion"
+msgstr "Voltooiing van opdrachten verplichten"
+
+msgid "When enabled, lessons with an assignment cannot be marked complete until the assignment is submitted."
+msgstr "Als dit is ingeschakeld, worden lessen met een opdracht pas afgerond nadat de opdracht is ingeleverd."
+
+msgid "Enforce quiz completion"
+msgstr "Voltooiing van toetsen verplichten"
+
+msgid "When enabled, lessons with a quiz cannot be marked complete until the quiz is submitted."
+msgstr "Als dit is ingeschakeld, worden lessen met een toets pas afgerond nadat de toets is ingeleverd."
+
+msgid "Badges"
+msgstr "Badges"
+
+msgid "Create badges and assign them to students to acknowledge their achievements"
+msgstr "Maak badges en ken ze toe aan cursisten om hun prestaties te erkennen"
+
+msgid "Categories"
+msgstr "Categorieën"
+
+msgid "Group courses under a category"
+msgstr "Groepeer cursussen in een categorie"
+
+msgid "Accounts"
+msgstr "Accounts"
+
+msgid "Manage email accounts for incoming and outgoing mail"
+msgstr "Beheer e-mailaccounts voor inkomende en uitgaande e-mail"
+
+msgid "Templates"
+msgstr "Sjablonen"
+
+msgid "Manage the email templates for your learning system"
+msgstr "Beheer de e-mailsjablonen voor je leerplatform"
+
+msgid "User Management"
+msgstr "Gebruikersbeheer"
+
+msgid "Manage users by adding or inviting them, and assign roles to control their access and permissions"
+msgstr "Voeg gebruikers toe of nodig ze uit en wijs rollen toe om hun toegang en rechten te beheren"
+
+msgid "Manage all your payment related settings and defaults"
+msgstr "Beheer alle instellingen en standaardwaarden voor betalingen"
+
+msgid "Default currency used for course and batch pricing."
+msgstr "Standaardvaluta voor cursus- en lesgroepprijzen."
+
+msgid "Show USD equivalent amount"
+msgstr "Omgerekend bedrag in USD tonen"
+
+msgid "If enabled, it shows the USD equivalent amount for all transactions based on the current exchange rate."
+msgstr "Als dit is ingeschakeld, wordt bij alle transacties het bedrag in USD getoond op basis van de huidige wisselkoers."
+
+msgid "Apply rounding on equivalent"
+msgstr "Omgerekend bedrag afronden"
+
+msgid "If enabled, it applies rounding on the USD equivalent amount."
+msgstr "Als dit is ingeschakeld, wordt het omgerekende bedrag in USD afgerond."
+
+msgid "Payment gateway used to process course and batch purchases."
+msgstr "Betaalgateway voor het verwerken van cursus- en lesgroepaankopen."
+
+msgid "If enabled, GST will be applied to the price for students from India."
+msgstr "Als dit is ingeschakeld, wordt GST toegevoegd aan de prijs voor cursisten uit India."
+
+msgid "Payment Reminders"
+msgstr "Betalingsherinneringen"
+
+msgid "Send payment reminders for batch"
+msgstr "Betalingsherinneringen voor lesgroepen versturen"
+
+msgid "If enabled, it sends payment reminders to students who left the payment incomplete for a batch."
+msgstr "Als dit is ingeschakeld, ontvangen cursisten een herinnering wanneer hun betaling voor een lesgroep niet is afgerond."
+
+msgid "Send payment reminders for course"
+msgstr "Betalingsherinneringen voor cursussen versturen"
+
+msgid "If enabled, it sends payment reminders to students who left the payment incomplete for a course."
+msgstr "Als dit is ingeschakeld, ontvangen cursisten een herinnering wanneer hun betaling voor een cursus niet is afgerond."
+
+msgid "Gateways"
+msgstr "Betaalgateways"
+
+msgid "Add and manage all your payment gateways"
+msgstr "Voeg betaalgateways toe en beheer ze"
+
+msgid "Transactions"
+msgstr "Transacties"
+
+msgid "View all your payment transactions"
+msgstr "Bekijk al je betalingstransacties"
+
+msgid "Coupons"
+msgstr "Kortingscodes"
+
+msgid "Manage discount coupons for courses and batches"
+msgstr "Beheer kortingscodes voor cursussen en lesgroepen"
+
+msgid "Manage zoom accounts to conduct live classes from batches"
+msgstr "Beheer Zoom-accounts voor live lessen in lesgroepen"
+
+msgid "Manage Google Meet accounts to conduct live classes from batches"
+msgstr "Beheer Google Meet-accounts voor live lessen in lesgroepen"
+
+msgid "Raven"
+msgstr "Raven"
+
+msgid "Automatically add your students and staff to Raven channels, by your own rules"
+msgstr "Voeg cursisten en medewerkers automatisch toe aan Raven-kanalen volgens je eigen regels"
+
+msgid "Customize"
+msgstr "Aanpassen"
+
+msgid "Branding"
+msgstr "Huisstijl"
+
+msgid "Customize the brand name and logo to make the application your own"
+msgstr "Pas de merknaam en het logo aan om de applicatie je eigen uitstraling te geven"
+
+msgid "Choose the items you want to show in the sidebar"
+msgstr "Kies welke onderdelen je in de zijbalk wilt tonen"
+
+msgid "Show the Courses link in the sidebar."
+msgstr "Toon de link naar Cursussen in de zijbalk."
+
+msgid "Show the Batches link in the sidebar."
+msgstr "Toon de link naar Lesgroepen in de zijbalk."
+
+msgid "Show the Programming Exercises link in the sidebar."
+msgstr "Toon de link naar Programmeeroefeningen in de zijbalk."
+
+msgid "Show the Certifications link in the sidebar."
+msgstr "Toon de link naar Certificeringen in de zijbalk."
+
+msgid "Show the Jobs link in the sidebar."
+msgstr "Toon de link naar Vacatures in de zijbalk."
+
+msgid "Show the Statistics link in the sidebar."
+msgstr "Toon de link naar Statistieken in de zijbalk."
+
+msgid "Show the Notifications link in the sidebar."
+msgstr "Toon de link naar Meldingen in de zijbalk."
+
+msgid "Signup"
+msgstr "Registratie"
+
+msgid "Manage the settings related to user signup and registration"
+msgstr "Beheer de instellingen voor gebruikersregistratie"
+
+msgid "Enable this option to identify the user category during signup."
+msgstr "Schakel dit in om tijdens registratie naar de gebruikerscategorie te vragen."
+
+msgid "Disable signup"
+msgstr "Registratie uitschakelen"
+
+msgid "New users will have to be manually registered by Admins."
+msgstr "Nieuwe gebruikers moeten handmatig door beheerders worden geregistreerd."
+
+msgid "Signup Consent HTML"
+msgstr "Toestemmingstekst bij registratie (HTML)"
+
+msgid "Custom HTML shown on the signup page, e.g. for consent notices or terms of service."
+msgstr "Eigen HTML op de registratiepagina, bijvoorbeeld voor toestemmingsverklaringen of gebruiksvoorwaarden."
+
+msgid "Manage the SEO settings to improve your website ranking on search engines"
+msgstr "Beheer SEO-instellingen om je website beter vindbaar te maken in zoekmachines"
+
+msgid "This description will be shown on lists and pages that don't have meta description"
+msgstr "Deze beschrijving wordt getoond op lijsten en pagina's zonder eigen metabeschrijving"
+
+msgid "Comma separated keywords for search engines to find your website."
+msgstr "Door komma's gescheiden trefwoorden waarmee zoekmachines je website kunnen vinden."
+
+msgid "Default social-share image used when pages lack their own meta image."
+msgstr "Standaardafbeelding voor delen op sociale media wanneer een pagina geen eigen meta-afbeelding heeft."
+
+msgid "Pages"
+msgstr "Pagina's"
+
+msgid "Log out"
+msgstr "Uitloggen"
+
+msgid "Clear Demo Data"
+msgstr "Demogegevens verwijderen"
+
+msgid "Login to Frappe Cloud"
+msgstr "Inloggen bij Frappe Cloud"
+
+msgid "Commerce management"
+msgstr "Commerce-beheer"
+
+msgid "Commerce"
+msgstr "Commerce"
+
+msgid "Header"
+msgstr "Kop"
+
+msgid "Error clearing demo data"
+msgstr "Fout bij verwijderen van demogegevens"
 

@@ -42,6 +42,15 @@ class TestDutchTranslations(unittest.TestCase):
 				self.assertNotIn("fuzzy", message.flags)
 				self.assertEqual(message.check(self.catalog), [])
 
+	def test_uses_informal_dutch_address_consistently(self):
+		for message in self.catalog:
+			if not message.id:
+				continue
+			with self.subTest(message=message.id):
+				# Test visible copy, not HTML tags such as <u>.
+				text = re.sub(r"<[^>]*>", " ", message.string)
+				self.assertNotRegex(text, re.compile(r"\b(u|uw|uwe|uzelf|alstublieft|gelieve)\b", re.I))
+
 	def test_no_duplicate_message_ids_are_silently_dropped(self):
 		# Babel merges duplicate ids on read. Count active PO records too,
 		# subtracting the header, so an accidental duplicate cannot pass.
@@ -53,6 +62,31 @@ class TestDutchTranslations(unittest.TestCase):
 			if message.id:
 				with self.subTest(message=message.id):
 					self.assertIn(message.id, self.catalog)
+
+	def test_covers_navigation_and_settings_registry_messages(self):
+		# These sources keep untranslated keys for routing and persisted values.
+		# Their render-time __(item.label) calls are invisible to literal-only
+		# gettext extraction, so explicitly guard the shared registries too.
+		paths = (
+			"components/Settings/settingsStructure.js",
+			"components/Settings/youRows.ts",
+			"components/Settings/mobileSettings.ts",
+			"components/Sidebar/UserDropdown.vue",
+			"components/CommandPalette/categories.ts",
+			"commerce/navigation.ts",
+			"utils/mobileNav.ts",
+			"utils/index.js",
+		)
+		pattern = re.compile(
+			r"""\b(?:label|description|placeholder):\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')"""
+		)
+		for path in paths:
+			for match in pattern.finditer((ROOT / "frontend" / "src" / path).read_text()):
+				text = ast.literal_eval(match.group(1))
+				if not text or text.startswith(("https://", "http://")):
+					continue
+				with self.subTest(path=path, message=text):
+					self.assertIn(text, self.catalog)
 
 	def test_preserves_interpolation_and_email_template_variables(self):
 		for message in self.catalog:
@@ -76,6 +110,24 @@ class TestDutchTranslations(unittest.TestCase):
 			"Settings": "Instellingen",
 			"Save": "Opslaan",
 			"My access": "Mijn toegang",
+			"My Profile": "Mijn profiel",
+			"You": "Jij",
+			"Your order": "Je bestelling",
+			"Are you sure you want to enroll?": "Weet je zeker dat je je wilt inschrijven?",
+			"Where did you hear about us?": "Waar heb je over ons gehoord?",
+			"Looking for new work or hiring talent?": "Op zoek naar een nieuwe baan of wil je talent aannemen?",
+			"Please prepare well and be on time for the evaluations.": (
+				"Bereid je goed voor en kom op tijd voor de evaluaties."
+			),
+			"Compare the available tiers and select the access level that suits you.": (
+				"Vergelijk de beschikbare toegangsniveaus en kies het niveau dat bij je past."
+			),
+			"Log out": "Uitloggen",
+			"Log in": "Inloggen",
+			"Clear Demo Data": "Demogegevens verwijderen",
+			"Login to Frappe Cloud": "Inloggen bij Frappe Cloud",
+			"System Configurations": "Systeeminstellingen",
+			"Commerce management": "Commerce-beheer",
 			"Continue your course": "Ga verder met je cursus",
 			"Start Quiz": "Toets starten",
 			"Checkout is currently unavailable.": "Afrekenen is momenteel niet beschikbaar.",

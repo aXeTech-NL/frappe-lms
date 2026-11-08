@@ -60,6 +60,7 @@ vi.mock('@/utils/safeUrl', () => ({ safeUrl: (s: string) => s }))
 vi.stubGlobal('__', (text: string) => text)
 
 import UserDropdown from '@/components/Sidebar/UserDropdown.vue'
+import translationPlugin from '@/translation'
 import { setThemePreference, themePreference } from '@/utils/theme'
 
 function build() {
@@ -72,6 +73,57 @@ function themeMenu(wrapper: ReturnType<typeof build>) {
 	const group = options[0].options as any[]
 	return group.find((option) => option.label === 'Theme')
 }
+
+describe('UserDropdown translations', () => {
+	const dutch = {
+		Learning: 'Leren',
+		'My Profile': 'Mijn profiel',
+		Settings: 'Instellingen',
+		'Clear Demo Data': 'Demogegevens verwijderen',
+		'Login to Frappe Cloud': 'Inloggen bij Frappe Cloud',
+		'Log out': 'Uitloggen',
+		'Log in': 'Inloggen',
+		Theme: 'Thema',
+		Light: 'Licht',
+		Dark: 'Donker',
+		System: 'Systeem',
+		Configuration: 'Configuratie',
+		Import: 'Importeren',
+	}
+
+	it.each([dutch, {}])('translates menu labels with native English fallback', (messages) => {
+		const browser = window as Window & { translatedMessages?: Record<string, string>; __?: any }
+		const previousMessages = browser.translatedMessages
+		const previousTranslate = browser.__
+		browser.translatedMessages = messages
+		setActivePinia(createPinia())
+		const wrapper = mount(UserDropdown, { global: { plugins: [translationPlugin] } })
+		try {
+			const translate = (text: string) => (messages as Record<string, string>)[text] || text
+			const items = wrapper.findComponent({ name: 'Dropdown' }).props('options')[0].options
+			const labels = items.map((item: any) => item.label)
+			for (const text of ['My Profile', 'Settings', 'Clear Demo Data', 'Login to Frappe Cloud', 'Log out', 'Log in']) {
+				expect(labels).toContain(translate(text))
+			}
+			expect(wrapper.text()).toContain(translate('Learning'))
+			const theme = items.find((item: any) => item.label === translate('Theme'))
+			expect(theme.submenu.map((item: any) => item.label)).toEqual(['Light', 'Dark', 'System'].map(translate))
+			const configuration = items.find((item: any) => item.label === translate('Configuration'))
+			expect(configuration.submenu[0].label).toBe(translate('Import'))
+			// Translated labels must not change session/role gates or theme values.
+			expect(items.find((item: any) => item.label === translate('My Profile')).condition()).toBe(true)
+			expect(items.find((item: any) => item.label === translate('Settings')).condition()).toBe(false)
+			expect(items.find((item: any) => item.label === translate('Log in')).condition()).toBe(false)
+			theme.submenu.find((item: any) => item.label === translate('Dark')).onClick()
+			expect(themePreference.value).toBe('dark')
+		} finally {
+			wrapper.unmount()
+			browser.translatedMessages = previousMessages
+			browser.__ = previousTranslate
+			setThemePreference('system')
+		}
+	})
+})
 
 describe('UserDropdown theme menu', () => {
 	beforeEach(() => {

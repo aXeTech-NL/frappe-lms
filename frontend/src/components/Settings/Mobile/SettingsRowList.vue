@@ -10,7 +10,7 @@
 			:label="__(row.label)"
 			:icon="row.icon"
 			:description="row.description"
-			:value="row.value"
+			:value="row.key === 'colour-mode' && row.value ? __(row.value) : row.value"
 			:href="safeUrl(row.href)"
 			:navigates="Boolean(row.to || row.action)"
 			:chevron="Boolean(row.to || row.href)"

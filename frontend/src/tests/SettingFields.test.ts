@@ -25,7 +25,13 @@ vi.mock('frappe-ui', () => ({
 			/>
 		`,
 	},
-	Select: { props: ['modelValue', 'options'], template: '<select />' },
+	Select: {
+		props: ['modelValue', 'options'],
+		emits: ['update:modelValue'],
+		template: `<select :value="modelValue" @change="$emit('update:modelValue', $event.target.value)">
+			<option v-for="option in options" :value="option.value">{{ option.label }}</option>
+		</select>`,
+	},
 	FileUploader: { template: '<div />' },
 	Button: { template: '<button />' },
 	Password: { template: '<input type="password" />' },
@@ -64,6 +70,46 @@ const mountFields = (sections: any[], data: any) =>
 		props: { sections, data },
 		global: { mocks: { __: (s: string) => s } },
 	})
+
+describe('SettingFields: translated display labels keep native stored values', () => {
+	it('translates headings, placeholders and select labels without translating saved values', async () => {
+		const messages: Record<string, string> = {
+			'System Configurations': 'Systeeminstellingen',
+			Email: 'E-mail',
+			Notifications: 'Meldingen',
+			'Type something': 'Typ iets',
+		}
+		const translate = (text: string) => messages[text] || text
+		const previousTranslate = (globalThis as any).__
+		vi.stubGlobal('__', translate)
+		const options = ['Email', { label: 'Notifications', value: 'In-app', disabled: true }]
+		const sections = [{
+			label: 'System Configurations',
+			columns: [{ fields: [
+				{ name: 'notification', label: 'Notifications', type: 'select', options },
+				{ name: 'note', label: 'Email', type: 'text', placeholder: 'Type something' },
+			] }],
+		}]
+		const data = reactive({ notification: 'In-app', note: '' })
+		const wrapper = mount(SettingFields, {
+			props: { sections, data },
+			global: { mocks: { __: translate } },
+		})
+		try {
+			expect(wrapper.text()).toContain('Systeeminstellingen')
+			expect(wrapper.get('input').attributes('placeholder')).toBe('Typ iets')
+			expect(wrapper.findAll('option').map((option) => option.text())).toEqual(['E-mail', 'Meldingen'])
+			expect(wrapper.findAll('option').map((option) => option.attributes('value'))).toEqual(['Email', 'In-app'])
+			expect(data.notification).toBe('In-app')
+			await wrapper.get('select').setValue('Email')
+			expect(data.notification).toBe('Email')
+			expect(options).toEqual(['Email', { label: 'Notifications', value: 'In-app', disabled: true }])
+		} finally {
+			wrapper.unmount()
+			vi.stubGlobal('__', previousTranslate)
+		}
+	})
+})
 
 describe('SettingFields: number input persists to data', () => {
 	it('typing into a number field updates data[field.name]', async () => {
