@@ -2,15 +2,17 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "field:tier_name",
- "creation": "2026-08-24 00:00:00.000000",
+ "creation": "2026-08-24 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "tier_name",
   "enabled",
+  "coming_soon",
   "column_break_rank",
   "rank",
-  "description"
+  "description",
+  "price"
  ],
  "fields": [
   {
@@ -47,10 +49,21 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "coming_soon",
+   "fieldtype": "Check",
+   "label": "Coming soon"
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "label": "Price"
   }
  ],
  "links": [],
- "modified": "2026-08-24 00:00:00.000000",
+ "modified": "2026-11-08 14:57:34.820137",
  "modified_by": "Administrator",
  "module": "LMS Commerce",
  "name": "Commerce Tier",
@@ -84,6 +97,7 @@
    "role": "Commerce Viewer"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "rank",
  "sort_order": "ASC",
  "states": [],
