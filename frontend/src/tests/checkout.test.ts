@@ -55,6 +55,12 @@ beforeEach(() => {
 			data: null,
 			loading: false,
 			error: null,
+			fetch: vi.fn(() => {
+				const resource = mocks.resources[key]
+				if (resource.error) return Promise.reject(resource.error)
+				resource.onSuccess?.(resource.data)
+				return Promise.resolve(resource.data)
+			}),
 			submit: vi
 				.fn()
 				.mockResolvedValue({ name: 'order-1', checkout_url: null }),
@@ -156,6 +162,24 @@ describe('native Commerce checkout', () => {
 				?.tagName,
 		).toBe('ASIDE')
 		expect(wrapper.find('aside').attributes('aria-label')).toBe('Your order')
+	})
+	it('handles rejected initial quote loading without an unhandled rejection', async () => {
+		mocks.resources.get_quote.error = new Error('Checkout is disabled')
+		const wrapper = mount(Checkout, { global: globals })
+		await flushPromises()
+		expect(mocks.resources.get_quote.fetch).toHaveBeenCalledTimes(1)
+		expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+		expect(mocks.resources.start_checkout.submit).not.toHaveBeenCalled()
+	})
+	it('handles rejected initial order loading without claiming access', async () => {
+		mocks.resources.get_order.error = new Error('Order not accessible')
+		const wrapper = mount(CheckoutReturn, { global: globals })
+		await flushPromises()
+		expect(mocks.resources.get_order.fetch).toHaveBeenCalledTimes(1)
+		expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+		expect(wrapper.text()).toContain('Back to courses')
+		expect(wrapper.text()).not.toContain('Payment confirmed')
+		expect(mocks.resources.refresh_order.submit).not.toHaveBeenCalled()
 	})
 	it('provides a way back when checkout cannot be loaded', () => {
 		mocks.resources.get_quote.error = new Error('Unavailable')

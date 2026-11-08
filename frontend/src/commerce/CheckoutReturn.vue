@@ -129,7 +129,6 @@ const refresh = createResource({
 const status = createResource({
 	url: 'lms.lms_commerce.services.checkout.get_order',
 	params: { order: orderName },
-	auto: true,
 	onSuccess(data) {
 		order.value = data
 		// Creating is uncertain: require an explicit retry with the same order key.
@@ -137,6 +136,8 @@ const status = createResource({
 			refresh.submit({ order: orderName }).catch(() => {})
 	},
 })
+// Invalid/inaccessible orders keep the error state and never imply payment.
+status.fetch().catch(() => {})
 const checkoutUrl = computed(() => {
 	if (
 		order.value?.access_granted ||

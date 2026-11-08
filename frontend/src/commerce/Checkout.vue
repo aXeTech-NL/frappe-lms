@@ -146,8 +146,9 @@ const error = ref(false)
 const quotation = createResource({
 	url: 'lms.lms_commerce.services.checkout.get_quote',
 	params: { offering: offering.value },
-	auto: true,
 })
+// An unavailable checkout is rendered inline, not an unhandled auto-fetch rejection.
+quotation.fetch().catch(() => {})
 const start = createResource({
 	url: 'lms.lms_commerce.services.checkout.start_checkout',
 })
